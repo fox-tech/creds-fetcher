@@ -8,9 +8,15 @@ import (
 
 func Unmarshal(value interface{}) (err error) {
 	rval := reflect.ValueOf(value)
+	if !rval.CanSet() {
+		return fmt.Errorf("value of %T is not settable", value)
+	}
+
 	rtype := rval.Type()
 	end := rval.NumField()
+	// Iterate through fields
 	for i := 0; i < end; i++ {
+		// Get field at current index
 		field := rval.Field(i)
 
 		// If this was a performance minded usage, we would create a lookup table for this.
@@ -21,12 +27,18 @@ func Unmarshal(value interface{}) (err error) {
 			continue
 		}
 
-		envVal := os.Getenv(fieldTag)
+		// We currently only support string, as string is the only field type within the
+		// Configuration struct. That being said, if we need to expand this later in the
+		// future, we can.
 		if field.Kind() != reflect.String {
 			err = fmt.Errorf("invalid field type supported, <%s> was provided and only <%s> is supported", field.Kind(), reflect.String)
 			return
 		}
 
+		// Get value for provided field tag
+		envVal := os.Getenv(fieldTag)
+
+		// Set the environment value for the given field
 		field.SetString(envVal)
 	}
 
