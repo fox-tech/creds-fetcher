@@ -7,8 +7,8 @@ import (
 )
 
 func Unmarshal(value interface{}) (err error) {
-	rval := reflect.ValueOf(value)
-	if !rval.CanSet() {
+	rval, ok := getTarget(value)
+	if !ok {
 		return fmt.Errorf("value of %T is not settable", value)
 	}
 
