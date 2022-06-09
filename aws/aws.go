@@ -3,24 +3,26 @@ package aws
 import (
 	"encoding/xml"
 	"errors"
-	"io/fs"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 
+	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/client"
+	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/fsmanager"
 	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/ini"
 )
 
 var (
-	ErrBadRequest        = errors.New("Invalid request to STS")
-	ErrNotAuthorized     = errors.New("Authentication failed")
-	ErrUnknown           = errors.New("Unexpected error ocurred")
-	ErrBadResponse       = errors.New("Could not read response from STS")
-	ErrCouldNotReadFile  = errors.New("Read credentials from file failed")
-	ErrCouldNotWriteFile = errors.New("Write credentials to file failed")
+	ErrBadRequest        = errors.New("invalid request to STS")
+	ErrNotAuthorized     = errors.New("authentication failed")
+	ErrUnknown           = errors.New("unexpected error ocurred")
+	ErrBadResponse       = errors.New("could not read response from STS")
+	ErrFailedMarshal     = errors.New("encoding credentials failed")
+	ErrFailedUnmarshal   = errors.New("decoding credentials failed")
+	ErrFileHandlerFailed = errors.New("error handling file")
 )
 
 func New(opts ...Option) Provider {
@@ -30,9 +32,19 @@ func New(opts ...Option) Provider {
 		opt(&aws)
 	}
 
+	if aws.fs == nil {
+		aws.fs = fsmanager.NewDefault()
+	}
+
+	if aws.httpClient == nil {
+		aws.httpClient = client.NewDefault()
+	}
+
 	return aws
 }
 
+// GenerateCredentials requests AWS CLI credentials using a SAML assertion
+// and saves them to a file
 func (aws Provider) GenerateCredentials(saml string) error {
 	// Exchange SAML for AWS Credentials
 	cred, err := aws.getSTSCredentialsFromSAML(saml)
@@ -49,6 +61,8 @@ func (aws Provider) GenerateCredentials(saml string) error {
 	return nil
 }
 
+// getSTSCredentialsFromSAML uses provided saml string to requests AWS CLI
+// credentials using STS.
 func (aws Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) {
 	log.Print("getting STS credentials...")
 
@@ -60,7 +74,6 @@ func (aws Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) 
 		"SAMLAssertion": saml,
 	}
 
-	client := &http.Client{}
 	q := url.Values{}
 	for k, v := range params {
 		q.Add(k, v)
@@ -68,40 +81,39 @@ func (aws Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) 
 
 	req, err := http.NewRequest(http.MethodGet, stsURL, nil)
 	if err != nil {
-		log.Fatalf("error creating request to STS: %v", err)
-		return credentials{}, ErrBadRequest
+		return credentials{}, fmt.Errorf("%w: %v", ErrBadRequest, err)
 	}
 
 	req.URL.RawQuery = q.Encode()
-	resp, err := client.Do(req)
+	resp, err := aws.httpClient.Do(req)
 	if err != nil {
-		log.Fatalf("error in response from STS: %v", err)
-		return credentials{}, ErrBadRequest
+		return credentials{}, fmt.Errorf("%w: %v", ErrBadRequest, err)
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
-		return credentials{}, ErrBadResponse
+		return credentials{}, fmt.Errorf("%w: %v", ErrBadResponse, err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("error in response from STS: %s", resp.Status)
-		// TODO: Add parsing of error message in body
+		errResponse := assumeRoleWiwthSAMLError{}
+
+		// ignoring unmarshall error to continue in case response does not have body
+		xml.Unmarshal(respBody, &errResponse)
+
 		switch resp.StatusCode {
 		case http.StatusBadRequest:
-			return credentials{}, ErrBadRequest
+			return credentials{}, fmt.Errorf("%w: status: %scode: %s message: %s", ErrBadRequest, resp.Status, errResponse.Error.Code, errResponse.Error.Message)
 		case http.StatusForbidden:
-			return credentials{}, ErrNotAuthorized
+			return credentials{}, fmt.Errorf("%w: status: %s, code: %s message: %s", ErrNotAuthorized, resp.Status, errResponse.Error.Code, errResponse.Error.Message)
 		default:
-			return credentials{}, ErrUnknown
+			return credentials{}, fmt.Errorf("%w: status: %s, code: %s message: %s", ErrUnknown, resp.Status, errResponse.Error.Code, errResponse.Error.Message)
 		}
 	}
 
 	stsResp := assumeRoleWithSAMLResponse{}
-	if err = xml.Unmarshal(respBody, &stsResp); err != nil {
-		log.Fatal("could not unmarshal STS response")
-		return credentials{}, ErrBadResponse
+	if err := xml.Unmarshal(respBody, &stsResp); err != nil {
+		return credentials{}, fmt.Errorf("%w: could not unmarshall response: %v", ErrBadResponse, err)
 	}
 
 	log.Print("STS credentials retrieved")
@@ -109,76 +121,32 @@ func (aws Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) 
 	return stsResp.AssumeRoleResult.Credentials, nil
 }
 
-func (aws Provider) updateCredentialsFile(newCred credentials) error {
+// updateCredentialsFile reads exising credentials, adds or replaces the new credentials and saves them to file
+func (p Provider) updateCredentialsFile(newCred credentials) error {
 	log.Print("updating credentials file...")
 
-	data, err := readCredentialsFile(credentialsDirectory, credentialsFileName)
+	data, err := p.fs.ReadFile(credentialsDirectory, credentialsFileName)
 	if err != nil {
-		log.Fatalf("unable to open credentials file: %v", err)
-		return ErrCouldNotReadFile
+		return fmt.Errorf("%w: %v", ErrFileHandlerFailed, err)
 	}
 
 	creds := map[string]credentials{}
 	err = ini.Unmarshal(data, creds)
 	if err != nil {
-		log.Fatalf("error while reading credentials file: %v", err)
-		return ErrCouldNotReadFile
+		return fmt.Errorf("%w: %v", ErrFailedUnmarshal, err)
 	}
 
-	creds[aws.Profile.Name] = newCred
+	creds[p.Profile.Name] = newCred
 	writeData, err := ini.Marshal(creds)
 	if err != nil {
-		log.Fatalf("Unable to write credentials file: %v", err)
-		return ErrCouldNotWriteFile
+		return fmt.Errorf("%w: %v", ErrFailedMarshal, err)
 	}
 
 	credentialsFilepath := filepath.Join(credentialsDirectory, credentialsFileName)
-	if err = os.WriteFile(credentialsFilepath, writeData, fs.FileMode(os.O_RDWR)); err != nil {
-		log.Fatalf("Unable to write credentials file: %v", err)
-		return ErrCouldNotWriteFile
+	if err = p.fs.WriteFile(credentialsFilepath, writeData); err != nil {
+		return fmt.Errorf("%w: %v", ErrFileHandlerFailed, err)
 	}
 
 	log.Print("credentials saved to file")
 	return nil
-}
-
-func readCredentialsFile(dir, filename string) (data []byte, err error) {
-	fp := filepath.Join(dir, filename)
-
-	// Switch to home directory
-	hd, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatalf("unable to open credentials file: %v", err)
-	}
-
-	if err = os.Chdir(hd); err != nil {
-		log.Fatalf("unable to open credentials file: %v", err)
-	}
-
-	data, err = ioutil.ReadFile(fp)
-	if err == nil || (err != nil && !os.IsNotExist(err)) {
-		return
-	}
-
-	_, err = os.Stat(dir)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return
-		}
-
-		log.Print("credentials directory not found, creating...")
-		if err = os.Mkdir(dir, 0766); err != nil {
-			return
-		}
-		log.Print("credentials directory created")
-	}
-
-	log.Print("credentials file not found, creating...")
-	_, err = os.Create(fp)
-	if err != nil {
-		return
-	}
-	log.Printf("credentials file created: %s", fp)
-
-	return
 }
