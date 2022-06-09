@@ -23,7 +23,12 @@ func TestNew(t *testing.T) {
 		err error
 	}
 
-	// emptyProfile := Profile{}
+	type args struct {
+		p    Profile
+		opts []Option
+	}
+
+	emptyProfile := Profile{}
 
 	prf := Profile{
 		Name:         "test-profile",
@@ -39,12 +44,12 @@ func TestNew(t *testing.T) {
 
 	tests := []struct {
 		name string
-		opts []Option
+		args
 		expect
 	}{
 		{
 			name: "success: provider is created with default client and manager",
-			opts: []Option{SetProfile(prf)},
+			args: args{p: prf},
 			expect: expect{
 				p: Provider{
 					Profile:    prf,
@@ -56,9 +61,11 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name: "success: provider is created mock client",
-			opts: []Option{
-				SetProfile(prf),
-				setHTTPClient(mckClient),
+			args: args{
+				p: prf,
+				opts: []Option{
+					setHTTPClient(mckClient),
+				},
 			},
 			expect: expect{
 				p: Provider{
@@ -71,9 +78,11 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name: "success: provider is created mock fs",
-			opts: []Option{
-				SetProfile(prf),
-				setFileManager(mckFs),
+			args: args{
+				p: prf,
+				opts: []Option{
+					setFileManager(mckFs),
+				},
 			},
 			expect: expect{
 				p: Provider{
@@ -86,7 +95,7 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name: "error: provider is created with empty profile",
-			opts: []Option{},
+			args: args{p: emptyProfile},
 			expect: expect{
 				p: Provider{
 					Profile: Profile{},
@@ -98,7 +107,7 @@ func TestNew(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			np, err := New(tt.opts...)
+			np, err := New(tt.args.p, tt.args.opts...)
 
 			if !errors.Is(err, tt.expect.err) {
 				t.Errorf("New() expected error: %s, got: %s", tt.expect.err, err)
@@ -209,7 +218,7 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p, _ := New(SetProfile(tt.opts.p),
+			p, _ := New(tt.opts.p,
 				setHTTPClient(tt.opts.mckClient),
 				setFileManager(tt.opts.mckFs),
 			)
@@ -307,7 +316,7 @@ func TestUpdateCredentialsFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p, _ := New(SetProfile(tt.opts.p),
+			p, _ := New(tt.opts.p,
 				setHTTPClient(tt.opts.mckClient),
 				setFileManager(tt.opts.mckFs),
 			)
@@ -383,7 +392,7 @@ func TestGenerateCredentials(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p, _ := New(SetProfile(tt.opts.p),
+			p, _ := New(tt.opts.p,
 				setHTTPClient(tt.opts.mckClient),
 				setFileManager(tt.opts.mckFs),
 			)

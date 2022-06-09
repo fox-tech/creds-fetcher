@@ -28,26 +28,27 @@ var (
 
 // New returns a new provider with the given options.
 // Returns error if no profile is set
-func New(opts ...Option) (Provider, error) {
-	aws := Provider{}
+func New(prf Profile, opts ...Option) (Provider, error) {
+	p := Provider{}
+	p.Profile = prf
 
 	for _, opt := range opts {
-		opt(&aws)
+		opt(&p)
 	}
 
-	if aws.Profile.IsEmpty() {
-		return aws, ErrMissingProfile
+	if p.Profile.IsEmpty() {
+		return p, ErrMissingProfile
 	}
 
-	if aws.fs == nil {
-		aws.fs = fsmanager.NewDefault()
+	if p.fs == nil {
+		p.fs = fsmanager.NewDefault()
 	}
 
-	if aws.httpClient == nil {
-		aws.httpClient = client.NewDefault()
+	if p.httpClient == nil {
+		p.httpClient = client.NewDefault()
 	}
 
-	return aws, nil
+	return p, nil
 }
 
 // GenerateCredentials requests AWS CLI credentials using a SAML assertion

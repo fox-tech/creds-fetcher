@@ -28,10 +28,10 @@ type Profile struct {
 }
 
 type Provider struct {
-	Profile Profile
-
 	fs fileSystemManager
 	httpClient
+
+	Profile Profile
 }
 
 type assumeRoleWithSAMLResponse struct {
