@@ -40,6 +40,32 @@ func getSource() (r io.ReadSeekCloser, key string, err error) {
 	return
 }
 
+func getReader(src string) (r io.ReadSeekCloser, err error) {
+	if src == "stdin" {
+		return getStdinReader()
+	}
+
+	return os.Open(src)
+}
+
+func getStdinReader() (r io.ReadSeekCloser, err error) {
+	buf := bytes.NewBuffer(nil)
+
+	var n int64
+	if n, err = io.Copy(buf, os.Stdin); err != nil {
+		return
+	}
+
+	if n == 0 {
+		err = io.EOF
+		return
+	}
+
+	reader := bytes.NewReader(buf.Bytes())
+	r = nopReadSeekCloser(reader)
+	return
+}
+
 func parseReader(r io.ReadSeeker) (cfg *Configuration, err error) {
 	for _, decoder := range decoders {
 		if cfg, err = decoder(r); err == nil {
@@ -72,31 +98,6 @@ func decodeAsJSON(r io.Reader) (cfg *Configuration, err error) {
 	}
 
 	cfg = &c
-	return
-}
-
-func getReader(src string) (r io.ReadSeekCloser, err error) {
-	if src == "stdin" {
-		return getStdinReader()
-	}
-
-	return os.Open(src)
-}
-
-func getStdinReader() (r io.ReadSeekCloser, err error) {
-	buf := bytes.NewBuffer(nil)
-	var n int64
-	if n, err = io.Copy(buf, os.Stdin); err != nil {
-		return
-	}
-
-	if n == 0 {
-		err = io.EOF
-		return
-	}
-
-	reader := bytes.NewReader(buf.Bytes())
-	r = nopReadSeekCloser(reader)
 	return
 }
 
