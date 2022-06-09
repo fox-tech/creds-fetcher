@@ -10,8 +10,9 @@ import (
 
 func Test_getSource(t *testing.T) {
 	tests := []struct {
-		name    string
-		prep    func() (toRemove *os.File, err error)
+		name string
+		prep func() (toRemove *os.File, err error)
+
 		wantKey string
 		wantErr bool
 	}{
@@ -80,14 +81,14 @@ func Test_getSource(t *testing.T) {
 }
 
 func Test_getReader(t *testing.T) {
-	var toClose []*os.File
 	type args struct {
 		src string
 	}
 	tests := []struct {
-		name    string
-		args    args
-		prep    func() error
+		name string
+		args args
+		prep func() (toRemove *os.File, err error)
+
 		wantR   io.ReadCloser
 		wantErr bool
 	}{
@@ -96,14 +97,12 @@ func Test_getReader(t *testing.T) {
 			args: args{
 				src: "stdin",
 			},
-			prep: func() (err error) {
-				var tmp *os.File
+			prep: func() (tmp *os.File, err error) {
 				if tmp, err = createTestTempFile(`{"a":"foo"}`); err != nil {
 					return
 				}
 
 				os.Stdin = tmp
-				toClose = append(toClose, tmp)
 				return
 			},
 		},
@@ -112,8 +111,7 @@ func Test_getReader(t *testing.T) {
 			args: args{
 				src: "stdin",
 			},
-			prep: func() (err error) {
-				var tmp *os.File
+			prep: func() (tmp *os.File, err error) {
 				if tmp, err = createTestTempFile(`{"a":"foo"}`); err != nil {
 					return
 				}
@@ -123,7 +121,6 @@ func Test_getReader(t *testing.T) {
 					return
 				}
 
-				toClose = append(toClose, tmp)
 				return
 			},
 			wantErr: true,
@@ -133,14 +130,8 @@ func Test_getReader(t *testing.T) {
 			args: args{
 				src: "./foo.json",
 			},
-			prep: func() (err error) {
-				var tmp *os.File
-				if tmp, err = createTestFile("./foo.json", `{"a":"foo"}`); err != nil {
-					return
-				}
-
-				toClose = append(toClose, tmp)
-				return
+			prep: func() (tmp *os.File, err error) {
+				return createTestFile("./foo.json", `{"a":"foo"}`)
 			},
 		},
 	}
@@ -151,8 +142,13 @@ func Test_getReader(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.prep(); err != nil {
+			toRemove, err := tt.prep()
+			if err != nil {
 				t.Fatal(err)
+			}
+			if toRemove != nil {
+				defer os.Remove(toRemove.Name())
+				defer toRemove.Close()
 			}
 
 			gotR, err := getReader(tt.args.src)
@@ -170,35 +166,31 @@ func Test_getReader(t *testing.T) {
 			}
 		})
 	}
-
-	closeAndRemove(toClose)
 }
 
 func Test_getStdinReader(t *testing.T) {
-	var toClose []*os.File
 	tests := []struct {
-		name         string
-		prep         func() error
+		name string
+		prep func() (toRemove *os.File, err error)
+
 		wantContents string
 		wantErr      bool
 	}{
 		{
 			name: "with contents",
-			prep: func() (err error) {
-				var tmp *os.File
+			prep: func() (tmp *os.File, err error) {
 				if tmp, err = createTestTempFile(`{"a":"foo"}`); err != nil {
 					return
 				}
 
 				os.Stdin = tmp
-				toClose = append(toClose, tmp)
 				return
 			},
 			wantContents: `{"a":"foo"}`,
 		},
 		{
 			name: "without contents",
-			prep: func() (err error) {
+			prep: func() (tmp *os.File, err error) {
 				return
 			},
 			wantErr: true,
@@ -207,8 +199,13 @@ func Test_getStdinReader(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.prep(); err != nil {
+			toRemove, err := tt.prep()
+			if err != nil {
 				t.Fatal(err)
+			}
+			if toRemove != nil {
+				defer os.Remove(toRemove.Name())
+				defer toRemove.Close()
 			}
 
 			gotR, err := getStdinReader()
@@ -230,16 +227,6 @@ func Test_getStdinReader(t *testing.T) {
 				t.Fatalf("getStdinReader() received = <%s>, wantContents = <%s>", gotString, tt.wantContents)
 			}
 		})
-	}
-
-	closeAndRemove(toClose)
-}
-
-func closeAndRemove(fs []*os.File) {
-	for _, f := range fs {
-		name := f.Name()
-		os.Remove(name)
-		f.Close()
 	}
 }
 
