@@ -38,7 +38,11 @@ func (defaultFileSystemManager) ReadFile(dir, filename string) ([]byte, error) {
 	}
 
 	data, err = ioutil.ReadFile(fp)
-	if err == nil || (err != nil && !os.IsNotExist(err)) {
+	if err == nil {
+		return data, nil
+	}
+
+	if err != nil && !os.IsNotExist(err) {
 		return data, fmt.Errorf("%w: failed to read file %s: %v", ErrCouldNotReadFile, fp, err)
 	}
 
