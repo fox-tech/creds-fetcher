@@ -56,3 +56,7 @@ type stsError struct {
 	Code    string `xml:"Code"`
 	Message string `xml:"Message"`
 }
+
+func (p Profile) IsEmpty() bool {
+	return p.Name == "" || p.RoleARN == "" || p.PrincipalARN == ""
+}

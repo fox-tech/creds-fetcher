@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"net/http"
+	"reflect"
 	"testing"
 
 	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/client"
@@ -14,6 +15,115 @@ type opts struct {
 	p         Profile
 	mckClient httpClient
 	mckFs     fileSystemManager
+}
+
+func TestNew(t *testing.T) {
+	type expect struct {
+		p   Provider
+		err error
+	}
+
+	// emptyProfile := Profile{}
+
+	prf := Profile{
+		Name:         "test-profile",
+		RoleARN:      "arn:aws:iam::ROLEARN",
+		PrincipalARN: "arn:aws:iam::ProviderARN",
+	}
+
+	defaultClient := client.NewDefault()
+	mckClient := client.NewMock(0, "", nil, nil)
+
+	defaultFs := fsmanager.NewDefault()
+	mckFs := fsmanager.NewMock(map[string][]byte{}, nil, nil)
+
+	tests := []struct {
+		name string
+		opts []Option
+		expect
+	}{
+		{
+			name: "success: provider is created with default client and manager",
+			opts: []Option{SetProfile(prf)},
+			expect: expect{
+				p: Provider{
+					Profile:    prf,
+					httpClient: defaultClient,
+					fs:         defaultFs,
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "success: provider is created mock client",
+			opts: []Option{
+				SetProfile(prf),
+				setHTTPClient(mckClient),
+			},
+			expect: expect{
+				p: Provider{
+					Profile:    prf,
+					httpClient: mckClient,
+					fs:         defaultFs,
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "success: provider is created mock fs",
+			opts: []Option{
+				SetProfile(prf),
+				setFileManager(mckFs),
+			},
+			expect: expect{
+				p: Provider{
+					Profile:    prf,
+					httpClient: defaultClient,
+					fs:         mckFs,
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "error: provider is created with empty profile",
+			opts: []Option{},
+			expect: expect{
+				p: Provider{
+					Profile: Profile{},
+				},
+				err: ErrMissingProfile,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			np, err := New(tt.opts...)
+
+			if !errors.Is(err, tt.expect.err) {
+				t.Errorf("New() expected error: %s, got: %s", tt.expect.err, err)
+			}
+
+			if np.Profile != tt.expect.p.Profile {
+				t.Errorf("New() expected profile: %v, got %v", tt.expect.p.Profile, np.Profile)
+			}
+
+			// using reflection to validate the inner fields
+			ect := reflect.TypeOf(tt.expect.p.httpClient)
+			gct := reflect.TypeOf(np.httpClient)
+			if ect != gct {
+				t.Errorf("New() expected httpClient type: %v, got %v", ect, gct)
+			}
+
+			efst := reflect.TypeOf(tt.expect.p.fs)
+			gfst := reflect.TypeOf(np.fs)
+			if efst != gfst {
+				t.Errorf("New() expected fsmanager type: %v, got %v", efst, gfst)
+			}
+
+		})
+	}
+
 }
 
 func TestGetSTSCredentialsFromSAML(t *testing.T) {
@@ -99,7 +209,7 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := New(SetProfile(tt.opts.p),
+			p, _ := New(SetProfile(tt.opts.p),
 				setHTTPClient(tt.opts.mckClient),
 				setFileManager(tt.opts.mckFs),
 			)
@@ -197,7 +307,7 @@ func TestUpdateCredentialsFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := New(SetProfile(tt.opts.p),
+			p, _ := New(SetProfile(tt.opts.p),
 				setHTTPClient(tt.opts.mckClient),
 				setFileManager(tt.opts.mckFs),
 			)
@@ -273,7 +383,7 @@ func TestGenerateCredentials(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := New(SetProfile(tt.opts.p),
+			p, _ := New(SetProfile(tt.opts.p),
 				setHTTPClient(tt.opts.mckClient),
 				setFileManager(tt.opts.mckFs),
 			)
@@ -287,6 +397,57 @@ func TestGenerateCredentials(t *testing.T) {
 			savedData, _ := tt.opts.mckFs.ReadFile(credentialsDirectory, credentialsFileName)
 			if !bytes.Equal(savedData, tt.expect.data) {
 				t.Errorf("GenerateCredentials() expected file data: %s, got: %s", tt.expect.data, savedData)
+			}
+		})
+	}
+}
+
+func TestIsEmpty(t *testing.T) {
+	tests := []struct {
+		name   string
+		p      Profile
+		expect bool
+	}{
+		{
+			name: "non-empty Profile",
+			p: Profile{
+				Name:         "test-profile",
+				RoleARN:      "role-arn",
+				PrincipalARN: "principal-arn",
+			},
+			expect: false,
+		},
+		{
+			name: "empty Profile Name",
+			p: Profile{
+				RoleARN:      "role-arn",
+				PrincipalARN: "principal-arn",
+			},
+			expect: true,
+		},
+		{
+			name: "empty Profile RoleARN",
+			p: Profile{
+				Name:         "test-profile",
+				PrincipalARN: "principal-arn",
+			},
+			expect: true,
+		},
+		{
+			name: "empty Profile principalARN",
+			p: Profile{
+				Name:    "test-profile",
+				RoleARN: "role-arn",
+			},
+			expect: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := tt.p.IsEmpty()
+			if e != tt.expect {
+				t.Errorf("IsEmpty() expected: %v, got %v", tt.expect, e)
 			}
 		})
 	}

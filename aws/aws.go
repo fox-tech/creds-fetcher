@@ -17,19 +17,26 @@ import (
 
 var (
 	ErrBadRequest        = errors.New("invalid request to STS")
-	ErrNotAuthorized     = errors.New("authentication failed")
-	ErrUnknown           = errors.New("unexpected error ocurred")
 	ErrBadResponse       = errors.New("could not read response from STS")
 	ErrFailedMarshal     = errors.New("encoding credentials failed")
 	ErrFailedUnmarshal   = errors.New("decoding credentials failed")
 	ErrFileHandlerFailed = errors.New("error handling file")
+	ErrMissingProfile    = errors.New("profile required to create provider")
+	ErrNotAuthorized     = errors.New("authentication failed")
+	ErrUnknown           = errors.New("unexpected error ocurred")
 )
 
-func New(opts ...Option) Provider {
+// New returns a new provider with the given options.
+// Returns error if no profile is set
+func New(opts ...Option) (Provider, error) {
 	aws := Provider{}
 
 	for _, opt := range opts {
 		opt(&aws)
+	}
+
+	if aws.Profile.IsEmpty() {
+		return aws, ErrMissingProfile
 	}
 
 	if aws.fs == nil {
@@ -40,7 +47,7 @@ func New(opts ...Option) Provider {
 		aws.httpClient = client.NewDefault()
 	}
 
-	return aws
+	return aws, nil
 }
 
 // GenerateCredentials requests AWS CLI credentials using a SAML assertion
