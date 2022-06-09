@@ -1,3 +1,4 @@
+// Package client provides elements to interact with http
 package client
 
 import "net/http"

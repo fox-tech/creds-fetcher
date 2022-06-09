@@ -1,3 +1,4 @@
+// Package fsmanager provides elements to interact with a File System
 package fsmanager
 
 import (

@@ -1,9 +1,6 @@
+// Package ini implements limited custom INI parser
+// Current suppported types: map[string]struct
 package ini
-
-/*
- Custom limited INI parser.
- /TODO Add docs
-*/
 
 import (
 	"bufio"

@@ -1,3 +1,4 @@
+// Package aws implements a Provider to interact with AWS
 package aws
 
 import (
