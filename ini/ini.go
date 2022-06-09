@@ -22,7 +22,6 @@ var (
 	ErrInvalidContent  = errors.New("invalid content")
 	ErrUnsupportedType = errors.New("content is not supported")
 	ErrMissingTag      = errors.New("missing tag for field")
-	ErrUnexpected      = errors.New("unexpected behavior")
 )
 
 // Unmarshall reads a bytes slice and assigns them to the passed interface
