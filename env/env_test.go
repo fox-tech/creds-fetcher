@@ -5,22 +5,6 @@ import (
 	"testing"
 )
 
-type testStruct struct {
-	A string `env:"a"`
-	B string `env:"b"`
-	C string `env:"c"`
-
-	IgnoreField string
-}
-
-type invalidTestStruct struct {
-	A string `env:"a"`
-	B int    `env:"b"`
-	C string `env:"c"`
-
-	IgnoreField string
-}
-
 func TestUnmarshal(t *testing.T) {
 	baseEnv := map[string]string{
 		"a":           "foo",
@@ -103,4 +87,42 @@ func makeDoublePointer() **testStruct {
 	var t testStruct
 	tp := &t
 	return &tp
+}
+
+func makeGetter() testGetter {
+	var t testStruct
+	return &t
+}
+
+type testStruct struct {
+	A string `env:"a"`
+	B string `env:"b"`
+	C string `env:"c"`
+
+	IgnoreField string
+}
+
+func (t *testStruct) Get(key string) (value string) {
+	switch key {
+	case "a":
+		return t.A
+	case "b":
+		return t.B
+	case "c":
+		return t.C
+	default:
+		return
+	}
+}
+
+type invalidTestStruct struct {
+	A string `env:"a"`
+	B int    `env:"b"`
+	C string `env:"c"`
+
+	IgnoreField string
+}
+
+type testGetter interface {
+	Get(key string) (value string)
 }
