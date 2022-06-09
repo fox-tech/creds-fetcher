@@ -1,7 +1,8 @@
 package configuration
 
 import (
-	"encoding/json"
+	"bytes"
+	"fmt"
 	"io"
 	"os"
 
@@ -9,14 +10,28 @@ import (
 )
 
 func getConfiguration() (cfg *Configuration, err error) {
-	for _, fn := range getFuncs {
-		cfg, err = fn()
-		switch {
-		case err == nil:
-			return
-		case os.IsNotExist(err):
+	var (
+		source io.ReadSeekCloser
+		key    string
+	)
 
-		default:
+	if source, key, err = getSource(); err != nil {
+		return
+	}
+	defer source.Close()
+
+	if cfg, err = parseReader(source); err != nil {
+		err = fmt.Errorf("error parsing <%s>: %v", key, err)
+		return
+	}
+
+	return
+}
+
+func getSource() (r io.ReadSeekCloser, key string, err error) {
+	for _, source := range sources {
+		if r, err = getReader(source); err == nil {
+			key = source
 			return
 		}
 	}
@@ -25,36 +40,23 @@ func getConfiguration() (cfg *Configuration, err error) {
 	return
 }
 
-func getAsJSON() (cfg *Configuration, err error) {
-	var (
-		c Configuration
-		r io.ReadCloser
-	)
+func parseReader(r io.ReadSeeker) (cfg *Configuration, err error) {
+	for _, decoder := range decoders {
+		if cfg, err = decoder(r); err == nil {
+			return
+		}
 
-	if r, err = os.Open("./configuration.json"); err != nil {
-		return
-	}
-	defer r.Close()
-
-	if err = json.NewDecoder(r).Decode(&c); err != nil {
-		return
+		if _, err = r.Seek(0, 0); err != nil {
+			return
+		}
 	}
 
-	cfg = &c
+	err = ErrCannotParseConfigurationFile
 	return
 }
 
-func getAsTOML() (cfg *Configuration, err error) {
-	var (
-		c Configuration
-		r io.ReadCloser
-	)
-
-	if r, err = os.Open("./configuration.toml"); err != nil {
-		return
-	}
-	defer r.Close()
-
+func decodeAsTOML(r io.Reader) (cfg *Configuration, err error) {
+	var c Configuration
 	if _, err = toml.NewDecoder(r).Decode(&c); err != nil {
 		return
 	}
@@ -62,3 +64,50 @@ func getAsTOML() (cfg *Configuration, err error) {
 	cfg = &c
 	return
 }
+
+func decodeAsJSON(r io.Reader) (cfg *Configuration, err error) {
+	var c Configuration
+	if _, err = toml.NewDecoder(r).Decode(&c); err != nil {
+		return
+	}
+
+	cfg = &c
+	return
+}
+
+func getReader(src string) (r io.ReadSeekCloser, err error) {
+	if src == "stdin" {
+		return getStdinReader()
+	}
+
+	return os.Open(src)
+}
+
+func getStdinReader() (r io.ReadSeekCloser, err error) {
+	buf := bytes.NewBuffer(nil)
+	var n int64
+	if n, err = io.Copy(buf, os.Stdin); err != nil {
+		return
+	}
+
+	if n == 0 {
+		err = io.EOF
+		return
+	}
+
+	reader := bytes.NewReader(buf.Bytes())
+	r = nopReadSeekCloser(reader)
+	return
+}
+
+type decoder func(io.Reader) (*Configuration, error)
+
+func nopReadSeekCloser(r io.ReadSeeker) (rsc io.ReadSeekCloser) {
+	return readSeekCloser{r}
+}
+
+type readSeekCloser struct {
+	io.ReadSeeker
+}
+
+func (readSeekCloser) Close() error { return nil }
