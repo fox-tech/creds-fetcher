@@ -5,14 +5,26 @@ import (
 )
 
 var (
-	ErrNoConfiguration       = errors.New("no configuration file found")
-	ErrInvalidAWSProviderARN = errors.New("invalid aws_provider_arn, cannot be empty")
-	ErrInvalidAWSRoleARN     = errors.New("invalid aws_role_arn, cannot be empty")
-	ErrInvalidOktaClientID   = errors.New("invalid okta_client_id, cannot be empty")
-	ErrInvalidOktaURL        = errors.New("invalid okta_url, cannot be empty")
+	ErrNoConfiguration              = errors.New("no configuration file found")
+	ErrCannotParseConfigurationFile = errors.New("unable to parse configuration file")
+	ErrInvalidAWSProviderARN        = errors.New("invalid aws_provider_arn, cannot be empty")
+	ErrInvalidAWSRoleARN            = errors.New("invalid aws_role_arn, cannot be empty")
+	ErrInvalidOktaClientID          = errors.New("invalid okta_client_id, cannot be empty")
+	ErrInvalidOktaURL               = errors.New("invalid okta_url, cannot be empty")
 )
 
-var getFuncs = []func() (c *Configuration, err error){getAsJSON, getAsTOML}
+var (
+	sources = []string{
+		"./config.json",
+		"./config.toml",
+		"stdin",
+	}
+
+	decoders = []decoder{
+		decodeAsJSON,
+		decodeAsTOML,
+	}
+)
 
 func New() (cfg *Configuration, err error) {
 	if cfg, err = getConfiguration(); err != nil {
