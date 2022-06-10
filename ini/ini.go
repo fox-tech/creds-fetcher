@@ -165,7 +165,7 @@ func createSplit(idx [][]int, totalBytes int) func(data []byte, atEOF bool) (adv
 
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		// Return nothing if at end of file and no data passed
-		if atEOF && i >= len(idx) {
+		if atEOF || i >= len(idx) {
 			return 0, nil, nil
 		}
 

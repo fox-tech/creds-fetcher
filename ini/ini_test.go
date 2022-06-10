@@ -1,6 +1,7 @@
 package ini
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"reflect"
@@ -82,7 +83,6 @@ func TestMarshall(t *testing.T) {
 			arg: map[string]noTagStruct{
 				"fish1": {Fish: "swims"},
 			},
-
 			expect: expect{
 				data: nil,
 				err:  ErrMissingTag,
@@ -545,35 +545,45 @@ func TestCreateSplit(t *testing.T) {
 	data := []byte("[myFirstPet]\nfox = the lazy fox\n\n[mySecondPet]\nfox = the not lazy fox\n\n")
 
 	idx := [][]int{
-		{0, 12},
-		{36, 49},
+		{0, 11},
+		{33, 45},
 	}
 	totalBytes := len(data)
-	f := createSplit(idx, totalBytes)
+	split := createSplit(idx, totalBytes)
+
+	sc := bufio.NewScanner(bytes.NewReader(data))
+	sc.Split(split)
+
+	buf := make([]byte, 2)
+	sc.Buffer(buf, bufio.MaxScanTokenSize)
 
 	// assert function works as expected, numers are calculated from the byte slice
 	tests := []struct {
-		expectAdvance int
-		expectedToken []byte
+		name   string
+		arg    bool
+		expect []byte
 	}{
 		{
-			expectAdvance: idx[1][0],
-			expectedToken: []byte("\nfox = the lazy fox\n\n"),
+			name:   "read first token",
+			expect: []byte("\nfox = the lazy fox\n\n"),
 		},
 		{
-			expectAdvance: totalBytes - idx[1][0],
-			expectedToken: []byte("\nfox = the not lazy fox\n\n"),
+			name:   "read second token",
+			expect: []byte("\nfox = the not lazy fox\n\n"),
+		},
+		{
+			name:   "reached EOF, stop reading",
+			arg:    true,
+			expect: nil,
 		},
 	}
 
 	for _, tt := range tests {
-		a, tkn, _ := f(data, false)
-		if a != tt.expectAdvance {
-			t.Errorf("createSplit() expected advamce: %d, got: %d", tt.expectAdvance, a)
-		}
-		if bytes.Equal(tkn, tt.expectedToken) {
-			t.Errorf("createSplit() expected token: %s, got: %s", tt.expectedToken, tkn)
+		sc.Scan()
+
+		tkn := sc.Bytes()
+		if !bytes.Equal(tkn, tt.expect) {
+			t.Errorf("createSplit() expected token: %s, got: %s", tt.expect, tkn)
 		}
 	}
-
 }

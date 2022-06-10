@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"net/http"
+	"path"
 	"reflect"
 	"testing"
 
@@ -40,7 +41,7 @@ func TestNew(t *testing.T) {
 	mckClient := client.MockHttpClient{}
 
 	defaultFs := fsmanager.NewDefault()
-	mckFs := fsmanager.NewMock(map[string][]byte{}, nil, nil)
+	mckFs := fsmanager.NewMock()
 
 	tests := []struct {
 		name string
@@ -245,6 +246,21 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 				err: ErrUnknown,
 			},
 		},
+		{
+			name: "request credentials, response cannot be unmarshalled: error is returned",
+			arg:  saml,
+			opts: opts{
+				p: prf,
+				mckClient: client.MockHttpClient{
+					GetStatusCode: http.StatusOK,
+					GetStatus:     "OK",
+					GetBodyData:   nil,
+				},
+			},
+			expect: expect{
+				err: ErrBadResponse,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -287,6 +303,8 @@ func TestUpdateCredentialsFile(t *testing.T) {
 		PrincipalARN: "arn:aws:iam::ProviderARN",
 	}
 
+	credentialsFilepath := path.Join(credentialsDirectory, credentialsFileName)
+
 	tests := []struct {
 		name string
 		arg  credentials
@@ -297,8 +315,10 @@ func TestUpdateCredentialsFile(t *testing.T) {
 			name: "new credentials: credentials are saved to file",
 			arg:  cred,
 			opts: opts{
-				p:     prf,
-				mckFs: fsmanager.NewMock(map[string][]byte{}, nil, nil),
+				p: prf,
+				mckFs: fsmanager.MockFileSystem{
+					Files: map[string][]byte{},
+				},
 			},
 			expect: expect{
 				data: []byte(newCredentialsFileContent),
@@ -310,9 +330,11 @@ func TestUpdateCredentialsFile(t *testing.T) {
 			arg:  cred,
 			opts: opts{
 				p: prf,
-				mckFs: fsmanager.NewMock(map[string][]byte{
-					".aws/credentials": []byte(credentialsFileContent),
-				}, nil, nil),
+				mckFs: fsmanager.MockFileSystem{
+					Files: map[string][]byte{
+						credentialsFilepath: []byte(credentialsFileContent),
+					},
+				},
 			},
 			expect: expect{
 				data: []byte(newCredentialsFileContent),
@@ -323,8 +345,10 @@ func TestUpdateCredentialsFile(t *testing.T) {
 			name: "error reading file: error is returned",
 			arg:  cred,
 			opts: opts{
-				p:     prf,
-				mckFs: fsmanager.NewMock(map[string][]byte{}, errors.New("broken pipe"), nil),
+				p: prf,
+				mckFs: fsmanager.MockFileSystem{
+					ReadErr: errors.New("broken pipe"),
+				},
 			},
 			expect: expect{
 				data: []byte{},
@@ -332,11 +356,29 @@ func TestUpdateCredentialsFile(t *testing.T) {
 			},
 		},
 		{
+			name: "error unmarshalling data: error is returned",
+			arg:  cred,
+			opts: opts{
+				p: prf,
+				mckFs: fsmanager.MockFileSystem{
+					Files: map[string][]byte{
+						credentialsFilepath: []byte("[test-profile]\naws_access_ey_id\n"),
+					},
+				},
+			},
+			expect: expect{
+				data: []byte("[test-profile]\naws_access_ey_id\n"),
+				err:  ErrFailedUnmarshal,
+			},
+		},
+		{
 			name: "error writing file: error is returned",
 			arg:  cred,
 			opts: opts{
-				p:     prf,
-				mckFs: fsmanager.NewMock(map[string][]byte{}, nil, errors.New("permission denied")),
+				p: prf,
+				mckFs: fsmanager.MockFileSystem{
+					WriteErr: errors.New("permission denied"),
+				},
 			},
 			expect: expect{
 				data: []byte{},
@@ -392,7 +434,7 @@ func TestGenerateCredentials(t *testing.T) {
 					GetStatus:     "OK",
 					GetBodyData:   []byte(successSTSResponse),
 				},
-				mckFs: fsmanager.NewMock(map[string][]byte{}, nil, nil),
+				mckFs: fsmanager.NewMock(),
 			},
 			expect: expect{
 				err:  nil,
@@ -408,7 +450,7 @@ func TestGenerateCredentials(t *testing.T) {
 					GetStatus:     "Forbiddend",
 					GetBodyData:   []byte(errSTSResponse),
 				},
-				mckFs: fsmanager.NewMock(map[string][]byte{}, nil, nil),
+				mckFs: fsmanager.NewMock(),
 			},
 			expect: expect{
 				err:  ErrNotAuthorized,
@@ -424,7 +466,9 @@ func TestGenerateCredentials(t *testing.T) {
 					GetStatus:     "OK",
 					GetBodyData:   []byte(successSTSResponse),
 				},
-				mckFs: fsmanager.NewMock(map[string][]byte{}, nil, errors.New("permission denied")),
+				mckFs: fsmanager.MockFileSystem{
+					WriteErr: errors.New("pemission (to dance) denied"),
+				},
 			},
 			expect: expect{
 				err:  ErrFileHandlerFailed,
