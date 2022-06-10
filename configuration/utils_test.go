@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -252,9 +253,69 @@ func Test_getStdinReader(t *testing.T) {
 	}
 }
 
+func Test_getReaderLength(t *testing.T) {
+	type args struct {
+		getReader func() (io.ReadSeeker, error)
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantN   int64
+		wantErr bool
+	}{
+		{
+			name: "success",
+			args: args{
+				getReader: func() (r io.ReadSeeker, err error) {
+					r = strings.NewReader("hello world")
+					return
+				},
+			},
+			wantN: 11,
+		},
+		{
+			name: "failure (closed file)",
+			args: args{
+				getReader: func() (r io.ReadSeeker, err error) {
+					return createTestClosedTempfile()
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var (
+				r   io.ReadSeeker
+				err error
+			)
+
+			if r, err = tt.args.getReader(); err != nil {
+				t.Errorf("getReaderLength() error getting reader: %v", err)
+				return
+			}
+
+			if f, ok := r.(*os.File); ok {
+				defer os.Remove(f.Name())
+				defer f.Close()
+			}
+
+			gotN, err := getReaderLength(r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getReaderLength() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if gotN != tt.wantN {
+				t.Errorf("getReaderLength() = %v, want %v", gotN, tt.wantN)
+			}
+		})
+	}
+}
+
 func Test_parseReader(t *testing.T) {
 	type args struct {
-		r io.ReadSeeker
+		getReader func() (io.ReadSeeker, error)
 	}
 	tests := []struct {
 		name    string
@@ -262,12 +323,95 @@ func Test_parseReader(t *testing.T) {
 		wantCfg *Configuration
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success (json)",
+			args: args{
+				getReader: func() (r io.ReadSeeker, err error) {
+					r = strings.NewReader(exampleJSON)
+					return
+				},
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaURL:        "4",
+			},
+		},
+		{
+			name: "success (toml)",
+			args: args{
+				getReader: func() (r io.ReadSeeker, err error) {
+					r = strings.NewReader(exampleTOML)
+					return
+				},
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaURL:        "4",
+			},
+		},
+		{
+			name: "failure (plaintext)",
+			args: args{
+				getReader: func() (r io.ReadSeeker, err error) {
+					r = strings.NewReader("hello world")
+					return
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "failure (json array)",
+			args: args{
+				getReader: func() (r io.ReadSeeker, err error) {
+					r = strings.NewReader(exampleJSONArray)
+					return
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "failure (no contents)",
+			args: args{
+				getReader: func() (r io.ReadSeeker, err error) {
+					r = strings.NewReader("")
+					return
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "failure (closed file)",
+			args: args{
+				getReader: func() (r io.ReadSeeker, err error) {
+					return createTestClosedTempfile()
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotCfg, err := parseReader(tt.args.r)
+			var (
+				r   io.ReadSeeker
+				err error
+			)
+
+			if r, err = tt.args.getReader(); err != nil {
+				t.Errorf("getReaderLength() error getting reader: %v", err)
+				return
+			}
+
+			gotCfg, err := parseReader(r)
+			if f, ok := r.(*os.File); ok {
+				defer os.Remove(f.Name())
+				defer f.Close()
+			}
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseReader() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -403,6 +547,15 @@ func createTestTempFile(str string) (tmp *os.File, err error) {
 	}
 
 	err = writeAndResetTestFile(tmp, str)
+	return
+}
+
+func createTestClosedTempfile() (tmp *os.File, err error) {
+	if tmp, err = createTestTempFile("hello world"); err != nil {
+		return
+	}
+
+	err = tmp.Close()
 	return
 }
 
