@@ -128,6 +128,169 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestConfiguration_OverrideWith(t *testing.T) {
+	type fields struct {
+		AWSProviderARN string
+		AWSRoleARN     string
+		OktaClientID   string
+		OktaAppID      string
+		OktaURL        string
+	}
+
+	type args struct {
+		in *Configuration
+	}
+
+	baseFields := fields{
+		AWSProviderARN: "1",
+		AWSRoleARN:     "2",
+		OktaClientID:   "3",
+		OktaAppID:      "4",
+		OktaURL:        "5",
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantCfg *Configuration
+	}{
+		{
+			name:   "AWS Provider ARN",
+			fields: baseFields,
+			args: args{
+				in: &Configuration{
+					AWSProviderARN: "1new",
+				},
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1new",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaAppID:      "4",
+				OktaURL:        "5",
+			},
+		},
+		{
+			name:   "AWS Role ARN",
+			fields: baseFields,
+			args: args{
+				in: &Configuration{
+					AWSRoleARN: "2new",
+				},
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2new",
+				OktaClientID:   "3",
+				OktaAppID:      "4",
+				OktaURL:        "5",
+			},
+		},
+		{
+			name:   "Okta Client ID",
+			fields: baseFields,
+			args: args{
+				in: &Configuration{
+					OktaClientID: "3new",
+				},
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3new",
+				OktaAppID:      "4",
+				OktaURL:        "5",
+			},
+		},
+		{
+			name:   "Okta App ID",
+			fields: baseFields,
+			args: args{
+				in: &Configuration{
+					OktaAppID: "4new",
+				},
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaAppID:      "4new",
+				OktaURL:        "5",
+			},
+		},
+		{
+			name:   "Okta URL",
+			fields: baseFields,
+			args: args{
+				in: &Configuration{
+					OktaURL: "5new",
+				},
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaAppID:      "4",
+				OktaURL:        "5new",
+			},
+		},
+		{
+			name:   "All AWS",
+			fields: baseFields,
+			args: args{
+				in: &Configuration{
+					AWSProviderARN: "1new",
+					AWSRoleARN:     "2new",
+				},
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1new",
+				AWSRoleARN:     "2new",
+				OktaClientID:   "3",
+				OktaAppID:      "4",
+				OktaURL:        "5",
+			},
+		},
+		{
+			name:   "All Okta",
+			fields: baseFields,
+			args: args{
+				in: &Configuration{
+					OktaClientID: "3new",
+					OktaAppID:    "4new",
+					OktaURL:      "5new",
+				},
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3new",
+				OktaAppID:      "4new",
+				OktaURL:        "5new",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Configuration{
+				AWSProviderARN: tt.fields.AWSProviderARN,
+				AWSRoleARN:     tt.fields.AWSRoleARN,
+				OktaClientID:   tt.fields.OktaClientID,
+				OktaAppID:      tt.fields.OktaAppID,
+				OktaURL:        tt.fields.OktaURL,
+			}
+			c.OverrideWith(tt.args.in)
+
+			if !reflect.DeepEqual(c, tt.wantCfg) {
+				fmt.Printf("Hm: %+v\n", c)
+				t.Errorf("Configuration.OverrideWith() = %v, want %v", c, tt.wantCfg)
+			}
+		})
+	}
+}
+
 func TestConfiguration_Validate(t *testing.T) {
 	type fields struct {
 		AWSProviderARN string

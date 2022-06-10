@@ -53,6 +53,28 @@ type Configuration struct {
 	OktaURL        string `toml:"okta_url" json:"okta_url" env:"okta_url"`
 }
 
+func (c *Configuration) OverrideWith(in *Configuration) {
+	if len(in.AWSProviderARN) > 0 {
+		c.AWSProviderARN = in.AWSProviderARN
+	}
+
+	if len(in.AWSRoleARN) > 0 {
+		c.AWSRoleARN = in.AWSRoleARN
+	}
+
+	if len(in.OktaClientID) > 0 {
+		c.OktaClientID = in.OktaClientID
+	}
+
+	if len(in.OktaAppID) > 0 {
+		c.OktaAppID = in.OktaAppID
+	}
+
+	if len(in.OktaURL) > 0 {
+		c.OktaURL = in.OktaURL
+	}
+}
+
 func (c *Configuration) Validate() (err error) {
 	if len(c.AWSProviderARN) == 0 {
 		return ErrInvalidAWSProviderARN
