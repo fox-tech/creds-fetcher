@@ -51,14 +51,7 @@ func getReader(src string) (r io.ReadSeekCloser, err error) {
 
 func getStdinReader() (r io.ReadSeekCloser, err error) {
 	buf := bytes.NewBuffer(nil)
-
-	var n int64
-	if n, err = io.Copy(buf, os.Stdin); err != nil {
-		return
-	}
-
-	if n == 0 {
-		err = io.EOF
+	if _, err = io.Copy(buf, os.Stdin); err != nil {
 		return
 	}
 
@@ -67,13 +60,28 @@ func getStdinReader() (r io.ReadSeekCloser, err error) {
 	return
 }
 
-func parseReader(r io.ReadSeeker) (cfg *Configuration, err error) {
-	for _, decoder := range decoders {
-		if cfg, err = decoder(r); err == nil {
-			return
-		}
+func getReaderLength(r io.ReadSeeker) (n int64, err error) {
+	if n, err = r.Seek(0, io.SeekEnd); err != nil {
+		return
+	}
 
-		if _, err = r.Seek(0, 0); err != nil {
+	_, err = r.Seek(0, io.SeekStart)
+	return
+}
+
+func parseReader(r io.ReadSeeker) (cfg *Configuration, err error) {
+	var length int64
+	if length, err = getReaderLength(r); err != nil {
+		return
+	}
+
+	if length == 0 {
+		err = ErrEmptyConfigurationFile
+		return
+	}
+
+	for _, d := range decoders {
+		if cfg, err = d.decodeOrReset(r); err == nil {
 			return
 		}
 	}
@@ -101,5 +109,3 @@ func decodeAsJSON(r io.Reader) (cfg *Configuration, err error) {
 	cfg = &c
 	return
 }
-
-type decoder func(io.Reader) (*Configuration, error)
