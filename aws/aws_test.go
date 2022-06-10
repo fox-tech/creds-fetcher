@@ -37,7 +37,7 @@ func TestNew(t *testing.T) {
 	}
 
 	defaultClient := client.NewDefault()
-	mckClient := client.NewMock(0, "", nil, nil)
+	mckClient := client.MockHttpClient{}
 
 	defaultFs := fsmanager.NewDefault()
 	mckFs := fsmanager.NewMock(map[string][]byte{}, nil, nil)
@@ -158,8 +158,12 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			name: "request credentials, successful response: credentials are retrieved",
 			arg:  saml,
 			opts: opts{
-				p:         prf,
-				mckClient: client.NewMock(http.StatusOK, "OK", []byte(successSTSResponse), nil),
+				p: prf,
+				mckClient: client.MockHttpClient{
+					GetStatusCode: http.StatusOK,
+					GetStatus:     "OK",
+					GetBodyData:   []byte(successSTSResponse),
+				},
 			},
 			expect: expect{
 				cred: credentials{
@@ -174,19 +178,39 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			name: "request credentials, error in getting credentials: error is returned",
 			arg:  saml,
 			opts: opts{
-				p:         prf,
-				mckClient: client.NewMock(0, "OK", []byte{}, errors.New("error while doing request")),
+				p: prf,
+				mckClient: client.MockHttpClient{
+					GetErr: errors.New("error while doing request"),
+				},
 			},
 			expect: expect{
 				err: ErrBadRequest,
 			},
 		},
 		{
+			name: "request credentials, error in reading body: error is returned",
+			arg:  saml,
+			opts: opts{
+				p: prf,
+				mckClient: client.MockHttpClient{
+					GetStatusCode: http.StatusOK,
+					GetStatus:     "OK",
+				},
+			},
+			expect: expect{
+				err: ErrBadResponse,
+			},
+		},
+		{
 			name: "request credentials, bad request: error is returned",
 			arg:  saml,
 			opts: opts{
-				p:         prf,
-				mckClient: client.NewMock(http.StatusBadRequest, "BadRequest", []byte(errSTSResponse), nil),
+				p: prf,
+				mckClient: client.MockHttpClient{
+					GetStatusCode: http.StatusBadRequest,
+					GetStatus:     "Bad Request",
+					GetBodyData:   []byte(errSTSResponse),
+				},
 			},
 			expect: expect{
 				err: ErrBadRequest,
@@ -196,8 +220,12 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			name: "request credentials, unauthorized: error is returned",
 			arg:  saml,
 			opts: opts{
-				p:         prf,
-				mckClient: client.NewMock(http.StatusForbidden, "Unauthorized", []byte(errSTSResponse), nil),
+				p: prf,
+				mckClient: client.MockHttpClient{
+					GetStatusCode: http.StatusForbidden,
+					GetStatus:     "Forbidden",
+					GetBodyData:   []byte(errSTSResponse),
+				},
 			},
 			expect: expect{
 				err: ErrNotAuthorized,
@@ -207,8 +235,11 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			name: "request credentials, unknown error: error is returned",
 			arg:  saml,
 			opts: opts{
-				p:         prf,
-				mckClient: client.NewMock(http.StatusInternalServerError, "Internal Server Error", []byte{}, nil),
+				p: prf,
+				mckClient: client.MockHttpClient{
+					GetStatusCode: http.StatusInternalServerError,
+					GetStatus:     "Internal Serverl Error",
+				},
 			},
 			expect: expect{
 				err: ErrUnknown,
@@ -355,9 +386,13 @@ func TestGenerateCredentials(t *testing.T) {
 		{
 			name: "sucess: credentials are generated",
 			opts: opts{
-				p:         prf,
-				mckClient: client.NewMock(http.StatusOK, "OK", []byte(successSTSResponse), nil),
-				mckFs:     fsmanager.NewMock(map[string][]byte{}, nil, nil),
+				p: prf,
+				mckClient: client.MockHttpClient{
+					GetStatusCode: http.StatusOK,
+					GetStatus:     "OK",
+					GetBodyData:   []byte(successSTSResponse),
+				},
+				mckFs: fsmanager.NewMock(map[string][]byte{}, nil, nil),
 			},
 			expect: expect{
 				err:  nil,
@@ -367,9 +402,13 @@ func TestGenerateCredentials(t *testing.T) {
 		{
 			name: "error: error getting credentials from sts",
 			opts: opts{
-				p:         prf,
-				mckClient: client.NewMock(http.StatusForbidden, "Unathorized", []byte(errSTSResponse), nil),
-				mckFs:     fsmanager.NewMock(map[string][]byte{}, nil, nil),
+				p: prf,
+				mckClient: client.MockHttpClient{
+					GetStatusCode: http.StatusForbidden,
+					GetStatus:     "Forbiddend",
+					GetBodyData:   []byte(errSTSResponse),
+				},
+				mckFs: fsmanager.NewMock(map[string][]byte{}, nil, nil),
 			},
 			expect: expect{
 				err:  ErrNotAuthorized,
@@ -379,9 +418,13 @@ func TestGenerateCredentials(t *testing.T) {
 		{
 			name: "error: error saving credentials to file",
 			opts: opts{
-				p:         prf,
-				mckClient: client.NewMock(http.StatusOK, "OK", []byte(successSTSResponse), nil),
-				mckFs:     fsmanager.NewMock(map[string][]byte{}, nil, errors.New("permission denied")),
+				p: prf,
+				mckClient: client.MockHttpClient{
+					GetStatusCode: http.StatusOK,
+					GetStatus:     "OK",
+					GetBodyData:   []byte(successSTSResponse),
+				},
+				mckFs: fsmanager.NewMock(map[string][]byte{}, nil, errors.New("permission denied")),
 			},
 			expect: expect{
 				err:  ErrFileHandlerFailed,

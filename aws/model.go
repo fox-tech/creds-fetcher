@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"io"
 	"net/http"
 )
 
@@ -15,7 +16,7 @@ const (
 
 // httpClient defines the methods that the provider needs an http client to have
 type httpClient interface {
-	Do(*http.Request) (*http.Response, error)
+	Get(r_url string, params map[string]string, body io.Reader) (*http.Response, error)
 }
 
 // fileSystemManager defines the methods that the provider needs a file system

@@ -5,10 +5,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"path/filepath"
 
 	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/client"
@@ -72,34 +71,23 @@ func (aws Provider) GenerateCredentials(saml string) error {
 
 // getSTSCredentialsFromSAML uses provided saml string to requests AWS CLI
 // credentials using STS.
-func (aws Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) {
+func (p Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) {
 	log.Print("getting STS credentials...")
 
 	params := map[string]string{
 		"Version":       "2011-06-15",
 		"Action":        "AssumeRoleWithSAML",
-		"RoleArn":       aws.Profile.RoleARN,
-		"PrincipalArn":  aws.Profile.PrincipalARN,
+		"RoleArn":       p.Profile.RoleARN,
+		"PrincipalArn":  p.Profile.PrincipalARN,
 		"SAMLAssertion": saml,
 	}
 
-	q := url.Values{}
-	for k, v := range params {
-		q.Add(k, v)
-	}
-
-	req, err := http.NewRequest(http.MethodGet, stsURL, nil)
+	resp, err := p.httpClient.Get(stsURL, params, nil)
 	if err != nil {
 		return credentials{}, fmt.Errorf("%w: %v", ErrBadRequest, err)
 	}
 
-	req.URL.RawQuery = q.Encode()
-	resp, err := aws.httpClient.Do(req)
-	if err != nil {
-		return credentials{}, fmt.Errorf("%w: %v", ErrBadRequest, err)
-	}
-
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return credentials{}, fmt.Errorf("%w: %v", ErrBadResponse, err)
 	}
