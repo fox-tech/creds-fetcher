@@ -104,3 +104,81 @@ func TestNew(t *testing.T) {
 		})
 	}
 }
+
+func TestConfiguration_Validate(t *testing.T) {
+	type fields struct {
+		AWSProviderARN string
+		AWSRoleARN     string
+		OktaClientID   string
+		OktaURL        string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaURL:        "4",
+			},
+		},
+		{
+			name: "failure (missing AWSProviderARN)",
+			fields: fields{
+				AWSProviderARN: "",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaURL:        "4",
+			},
+			wantErr: true,
+		},
+		{
+			name: "failure (missing AWSRoleARN)",
+			fields: fields{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "",
+				OktaClientID:   "3",
+				OktaURL:        "4",
+			},
+			wantErr: true,
+		},
+		{
+			name: "failure (missing OktaClientID)",
+			fields: fields{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "",
+				OktaURL:        "4",
+			},
+			wantErr: true,
+		},
+		{
+			name: "failure (missing OktaURL)",
+			fields: fields{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaURL:        "",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Configuration{
+				AWSProviderARN: tt.fields.AWSProviderARN,
+				AWSRoleARN:     tt.fields.AWSRoleARN,
+				OktaClientID:   tt.fields.OktaClientID,
+				OktaURL:        tt.fields.OktaURL,
+			}
+			if err := c.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Configuration.Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
