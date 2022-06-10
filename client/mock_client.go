@@ -7,23 +7,20 @@ import (
 	"net/http"
 )
 
-type mockHttpClient struct {
-	response *http.Response
-	err      error
+type MockHttpClient struct {
+	GetStatusCode int
+	GetStatus     string
+	GetBodyData   []byte
+	GetErr        error
 }
 
-func NewMock(sc int, st string, data []byte, err error) mockHttpClient {
-	resp := http.Response{
-		StatusCode: sc,
-		Status:     fmt.Sprintf("%d : %s", sc, st),
-		Body:       io.NopCloser(bytes.NewBuffer(data)),
-	}
-	return mockHttpClient{
-		response: &resp,
-		err:      err,
-	}
-}
-
-func (m mockHttpClient) Do(req *http.Request) (*http.Response, error) {
-	return m.response, m.err
+func (m MockHttpClient) Get(r_url string, params map[string]string, body io.Reader) (*http.Response, error) {
+	return &http.Response{
+		StatusCode: m.GetStatusCode,
+		Status:     fmt.Sprintf("%d : %s", m.GetStatusCode, m.GetStatus),
+		Body:       io.NopCloser(bytes.NewBuffer(m.GetBodyData)),
+		Request: &http.Request{
+			Method: http.MethodGet,
+		},
+	}, m.GetErr
 }
