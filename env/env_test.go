@@ -1,6 +1,7 @@
 package env
 
 import (
+	"log"
 	"os"
 	"testing"
 )
@@ -127,4 +128,17 @@ func makeGetter() testGetter {
 
 type testGetter interface {
 	Get(key string) (value string)
+}
+
+func ExampleUnmarshal() {
+	type config struct {
+		A string `env:"a"`
+		B string `env:"b"`
+		C string `env:"c"`
+	}
+
+	var cfg config
+	if err := Unmarshal(&cfg); err != nil {
+		log.Fatal(err)
+	}
 }
