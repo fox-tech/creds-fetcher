@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -62,7 +63,7 @@ func getStdinReader() (r io.ReadSeekCloser, err error) {
 	}
 
 	reader := bytes.NewReader(buf.Bytes())
-	r = nopReadSeekCloser(reader)
+	r = makeReadSeekCloser(reader)
 	return
 }
 
@@ -93,7 +94,7 @@ func decodeAsTOML(r io.Reader) (cfg *Configuration, err error) {
 
 func decodeAsJSON(r io.Reader) (cfg *Configuration, err error) {
 	var c Configuration
-	if _, err = toml.NewDecoder(r).Decode(&c); err != nil {
+	if err = json.NewDecoder(r).Decode(&c); err != nil {
 		return
 	}
 
@@ -102,13 +103,3 @@ func decodeAsJSON(r io.Reader) (cfg *Configuration, err error) {
 }
 
 type decoder func(io.Reader) (*Configuration, error)
-
-func nopReadSeekCloser(r io.ReadSeeker) (rsc io.ReadSeekCloser) {
-	return readSeekCloser{r}
-}
-
-type readSeekCloser struct {
-	io.ReadSeeker
-}
-
-func (readSeekCloser) Close() error { return nil }
