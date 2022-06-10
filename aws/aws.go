@@ -87,6 +87,7 @@ func (p Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) {
 	}
 
 	resp, err := p.httpClient.Get(stsURL, params, nil)
+	defer resp.Body.Close()
 	if err != nil {
 		return credentials{}, fmt.Errorf("%w: %v", ErrBadRequest, err)
 	}
