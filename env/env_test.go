@@ -91,11 +91,6 @@ func makeDoublePointer() **testStruct {
 	return &tp
 }
 
-func makeGetter() testGetter {
-	var t testStruct
-	return &t
-}
-
 type testStruct struct {
 	A string `env:"a"`
 	B string `env:"b"`
@@ -123,6 +118,11 @@ type invalidTestStruct struct {
 	C string `env:"c"`
 
 	IgnoreField string
+}
+
+func makeGetter() testGetter {
+	var t testStruct
+	return &t
 }
 
 type testGetter interface {
