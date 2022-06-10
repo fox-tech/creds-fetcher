@@ -3,6 +3,7 @@ package aws
 import (
 	"bytes"
 	"errors"
+	"io"
 	"net/http"
 	"path"
 	"reflect"
@@ -10,12 +11,34 @@ import (
 
 	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/client"
 	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/fsmanager"
+	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/ini"
 )
 
 type opts struct {
-	p         Profile
-	mckClient httpClient
-	mckFs     fileSystemManager
+	p            Profile
+	mckClient    httpClient
+	mckFs        fileSystemManager
+	byteReader   func(io.Reader) ([]byte, error)
+	iniMarshal   func(interface{}) ([]byte, error)
+	iniUnmarshal func([]byte, interface{}) error
+}
+
+func initOpts(o opts) {
+	if o.byteReader != nil {
+		ioReadAll = o.byteReader
+	}
+	if o.iniMarshal != nil {
+		iniMarshal = o.iniMarshal
+	}
+	if o.iniUnmarshal != nil {
+		iniUnmarshal = o.iniUnmarshal
+	}
+}
+
+func resetOpts() {
+	ioReadAll = io.ReadAll
+	iniMarshal = ini.Marshal
+	iniUnmarshal = ini.Unmarshal
 }
 
 func TestNew(t *testing.T) {
@@ -247,6 +270,22 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			},
 		},
 		{
+			name: "request credentials, response cannot be read: error is returned",
+			arg:  saml,
+			opts: opts{
+				p: prf,
+				mckClient: client.MockHttpClient{
+					GetStatusCode: http.StatusOK,
+					GetStatus:     "OK",
+					GetBodyData:   []byte(successSTSResponse),
+				},
+				byteReader: func(io.Reader) ([]byte, error) { return nil, errors.New("response could not be read") },
+			},
+			expect: expect{
+				err: ErrBadResponse,
+			},
+		},
+		{
 			name: "request credentials, response cannot be unmarshalled: error is returned",
 			arg:  saml,
 			opts: opts{
@@ -265,6 +304,9 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initOpts(tt.opts)
+			defer resetOpts()
+
 			p, _ := New(tt.opts.p,
 				setHTTPClient(tt.opts.mckClient),
 				setFileManager(tt.opts.mckFs),
@@ -372,6 +414,23 @@ func TestUpdateCredentialsFile(t *testing.T) {
 			},
 		},
 		{
+			name: "error marshalling data: error is returned",
+			arg:  cred,
+			opts: opts{
+				p: prf,
+				mckFs: fsmanager.MockFileSystem{
+					Files: map[string][]byte{
+						credentialsFilepath: []byte(newCredentialsFileContent),
+					},
+				},
+				iniMarshal: func(v interface{}) ([]byte, error) { return nil, errors.New("unable to marshall data") },
+			},
+			expect: expect{
+				data: []byte(newCredentialsFileContent),
+				err:  ErrFailedMarshal,
+			},
+		},
+		{
 			name: "error writing file: error is returned",
 			arg:  cred,
 			opts: opts{
@@ -389,6 +448,9 @@ func TestUpdateCredentialsFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			initOpts(tt.opts)
+			defer resetOpts()
+
 			p, _ := New(tt.opts.p,
 				setHTTPClient(tt.opts.mckClient),
 				setFileManager(tt.opts.mckFs),

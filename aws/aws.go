@@ -24,6 +24,10 @@ var (
 	ErrMissingProfile    = errors.New("profile required to create provider")
 	ErrNotAuthorized     = errors.New("authentication failed")
 	ErrUnknown           = errors.New("unexpected error ocurred")
+
+	ioReadAll    = io.ReadAll
+	iniMarshal   = ini.Marshal
+	iniUnmarshal = ini.Unmarshal
 )
 
 // New returns a new provider with the given options.
@@ -87,7 +91,7 @@ func (p Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) {
 		return credentials{}, fmt.Errorf("%w: %v", ErrBadRequest, err)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
+	respBody, err := ioReadAll(resp.Body)
 	if err != nil {
 		return credentials{}, fmt.Errorf("%w: %v", ErrBadResponse, err)
 	}
@@ -128,13 +132,13 @@ func (p Provider) updateCredentialsFile(newCred credentials) error {
 	}
 
 	creds := map[string]credentials{}
-	err = ini.Unmarshal(data, creds)
+	err = iniUnmarshal(data, creds)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrFailedUnmarshal, err)
 	}
 
 	creds[p.Profile.Name] = newCred
-	writeData, err := ini.Marshal(creds)
+	writeData, err := iniMarshal(creds)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrFailedMarshal, err)
 	}
