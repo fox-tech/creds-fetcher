@@ -1,6 +1,8 @@
 package configuration
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"reflect"
 	"testing"
@@ -201,5 +203,36 @@ func TestConfiguration_Validate(t *testing.T) {
 				t.Errorf("Configuration.Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func ExampleNew() {
+	cfg, err := New("")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("We have our configuration!", cfg)
+}
+
+func ExampleNew_with_override() {
+	cfg, err := New("./path/to/config/config.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("We have our configuration!", cfg)
+}
+
+func ExampleConfiguration_Validate() {
+	cfg := Configuration{
+		AWSProviderARN: "1",
+		AWSRoleARN:     "2",
+		OktaClientID:   "3",
+		OktaURL:        "4",
+	}
+
+	if err := cfg.Validate(); err != nil {
+		log.Fatal(err)
 	}
 }
