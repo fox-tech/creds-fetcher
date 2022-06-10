@@ -32,6 +32,10 @@ var (
 //	- ./configuration.json
 //	- ./configuration.toml
 //	- stdin
+//
+// Once the initial configuration is loaded, the library will then check the os environment
+// variables. In order to determine if any variable overrides are required. If so, the provided
+// environment values which are set will be applied to the loaded configuration.
 func New(overrideLocation string) (cfg *Configuration, err error) {
 	if cfg, err = getConfiguration(overrideLocation); err != nil {
 		return
