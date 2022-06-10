@@ -6,6 +6,7 @@ import (
 
 var (
 	ErrNoConfiguration              = errors.New("no configuration file found")
+	ErrEmptyConfigurationFile       = errors.New("invalid configuration file, cannot be empty")
 	ErrCannotParseConfigurationFile = errors.New("unable to parse configuration file")
 	ErrInvalidAWSProviderARN        = errors.New("invalid aws_provider_arn, cannot be empty")
 	ErrInvalidAWSRoleARN            = errors.New("invalid aws_role_arn, cannot be empty")
