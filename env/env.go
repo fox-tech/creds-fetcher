@@ -7,12 +7,15 @@ import (
 )
 
 func Unmarshal(value interface{}) (err error) {
+	// Get target value
 	rval, ok := getTarget(value)
 	if !ok {
 		return fmt.Errorf("value of %T is not settable", value)
 	}
 
+	// Get the type of target
 	rtype := rval.Type()
+	// Get the number of fields of target
 	end := rval.NumField()
 	// Iterate through fields
 	for i := 0; i < end; i++ {
