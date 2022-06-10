@@ -9,6 +9,7 @@ func Test_getTarget(t *testing.T) {
 	type args struct {
 		getValue func() interface{}
 	}
+
 	tests := []struct {
 		name       string
 		args       args
@@ -98,6 +99,7 @@ func Test_getTarget(t *testing.T) {
 			wantOk: false,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotTarget, gotOk := getTarget(tt.args.getValue())

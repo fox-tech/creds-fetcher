@@ -1,8 +1,6 @@
 package configuration
 
-import (
-	"errors"
-)
+import "errors"
 
 var (
 	ErrNoConfiguration              = errors.New("no configuration file found")

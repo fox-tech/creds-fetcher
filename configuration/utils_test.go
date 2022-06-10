@@ -15,6 +15,7 @@ func Test_getConfiguration(t *testing.T) {
 	type args struct {
 		overrideLocation string
 	}
+
 	tests := []struct {
 		name    string
 		args    args
@@ -161,6 +162,7 @@ func Test_getSource(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var (
@@ -195,6 +197,7 @@ func Test_getReader(t *testing.T) {
 	type args struct {
 		src string
 	}
+
 	tests := []struct {
 		name string
 		args args
@@ -345,6 +348,7 @@ func Test_getReaderLength(t *testing.T) {
 	type args struct {
 		getReader func() (io.ReadSeeker, error)
 	}
+
 	tests := []struct {
 		name    string
 		args    args
@@ -371,6 +375,7 @@ func Test_getReaderLength(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var (
@@ -405,6 +410,7 @@ func Test_parseReader(t *testing.T) {
 	type args struct {
 		getReader func() (io.ReadSeeker, error)
 	}
+
 	tests := []struct {
 		name    string
 		args    args
@@ -515,6 +521,7 @@ func Test_decodeAsTOML(t *testing.T) {
 	type args struct {
 		r io.Reader
 	}
+
 	tests := []struct {
 		name    string
 		args    args
@@ -574,6 +581,7 @@ func Test_decodeAsJSON(t *testing.T) {
 	type args struct {
 		r io.Reader
 	}
+
 	tests := []struct {
 		name    string
 		args    args

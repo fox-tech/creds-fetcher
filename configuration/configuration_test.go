@@ -132,6 +132,7 @@ func TestConfiguration_Validate(t *testing.T) {
 		OktaClientID   string
 		OktaURL        string
 	}
+
 	tests := []struct {
 		name    string
 		fields  fields

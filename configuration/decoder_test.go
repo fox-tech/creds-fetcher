@@ -12,6 +12,7 @@ func Test_decoder_decodeOrReset(t *testing.T) {
 	type args struct {
 		getReader func() (io.ReadSeeker, error)
 	}
+
 	tests := []struct {
 		name    string
 		d       decoder
