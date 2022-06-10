@@ -36,7 +36,7 @@ func Test_getConfiguration(t *testing.T) {
 			wantCfg: exampleConfiguration,
 		},
 		{
-			name: "success (with override)",
+			name: "success (with override location)",
 			args: args{
 				overrideLocation: "./Test_getConfiguration.override.json",
 			},
@@ -45,6 +45,24 @@ func Test_getConfiguration(t *testing.T) {
 				return
 			},
 			wantCfg: exampleConfiguration,
+		},
+		{
+			name: "success (with override values)",
+			args: args{},
+			prep: func() (toRemove *os.File, err error) {
+				toRemove, err = createTestTempFile(exampleJSON)
+				os.Stdin = toRemove
+				os.Setenv("aws_provider_arn", "1n")
+				os.Setenv("aws_role_arn", "2n")
+				return
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1n",
+				AWSRoleARN:     "2n",
+				OktaClientID:   "3",
+				OktaAppID:      "4",
+				OktaURL:        "5",
+			},
 		},
 		{
 			name: "failure (closed file)",
@@ -72,6 +90,8 @@ func Test_getConfiguration(t *testing.T) {
 				toRemove *os.File
 				err      error
 			)
+
+			os.Clearenv()
 
 			if toRemove, err = tt.prep(); err != nil {
 				t.Errorf("getConfiguration() error preparing test: %v", err)

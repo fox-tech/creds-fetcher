@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/env"
 )
 
 func getConfiguration(overrideLocation string) (cfg *Configuration, err error) {
@@ -26,6 +27,13 @@ func getConfiguration(overrideLocation string) (cfg *Configuration, err error) {
 		return
 	}
 
+	var overrideValues Configuration
+	if err = env.Unmarshal(&overrideValues); err != nil {
+		err = fmt.Errorf("error Unmarshaling environment variables: %v", err)
+		return
+	}
+
+	cfg.OverrideWith(&overrideValues)
 	return
 }
 
