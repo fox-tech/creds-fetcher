@@ -27,8 +27,14 @@ var (
 	}
 )
 
-func New() (cfg *Configuration, err error) {
-	if cfg, err = getConfiguration(); err != nil {
+// New will create a new Configuration from the configuration local configuration file.
+// An optional override location argument allows for configurations located outside of the
+// default scope. The default scope is as follows:
+//	- ./configuration.json
+//	- ./configuration.toml
+//	- stdin
+func New(overrideLocation string) (cfg *Configuration, err error) {
+	if cfg, err = getConfiguration(overrideLocation); err != nil {
 		return
 	}
 

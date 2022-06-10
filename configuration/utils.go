@@ -10,13 +10,13 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-func getConfiguration() (cfg *Configuration, err error) {
+func getConfiguration(overrideLocation string) (cfg *Configuration, err error) {
 	var (
 		source io.ReadSeekCloser
 		key    string
 	)
 
-	if source, key, err = getSource(); err != nil {
+	if source, key, err = getSource(overrideLocation); err != nil {
 		return
 	}
 	defer source.Close()
@@ -29,7 +29,13 @@ func getConfiguration() (cfg *Configuration, err error) {
 	return
 }
 
-func getSource() (r io.ReadSeekCloser, key string, err error) {
+func getSource(overrideLocation string) (r io.ReadSeekCloser, key string, err error) {
+	if len(overrideLocation) > 0 {
+		key = overrideLocation
+		r, err = getReader(key)
+		return
+	}
+
 	for _, source := range sources {
 		if r, err = getReader(source); err == nil {
 			key = source
