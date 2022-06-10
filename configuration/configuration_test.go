@@ -34,8 +34,13 @@ okta_url = "4"
 )
 
 func TestNew(t *testing.T) {
+	type args struct {
+		overrideLocation string
+	}
+
 	tests := []struct {
 		name string
+		args args
 		prep func() (toRemove *os.File, err error)
 
 		wantCfg *Configuration
@@ -47,6 +52,21 @@ func TestNew(t *testing.T) {
 				toRemove, err = createTestTempFile(exampleJSON)
 				os.Stdin = toRemove
 				return
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaURL:        "4",
+			},
+		},
+		{
+			name: "success (override location)",
+			args: args{
+				overrideLocation: "./Test_New.override.json",
+			},
+			prep: func() (tmp *os.File, err error) {
+				return createTestFile("./Test_New.override.json", exampleJSON)
 			},
 			wantCfg: &Configuration{
 				AWSProviderARN: "1",
@@ -92,7 +112,7 @@ func TestNew(t *testing.T) {
 				defer toRemove.Close()
 			}
 
-			gotCfg, err := New()
+			gotCfg, err := New(tt.args.overrideLocation)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("New() error = %v, wantErr %v", err, tt.wantErr)
 				return

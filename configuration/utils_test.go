@@ -12,17 +12,40 @@ import (
 )
 
 func Test_getConfiguration(t *testing.T) {
+	type args struct {
+		overrideLocation string
+	}
 	tests := []struct {
 		name    string
+		args    args
 		prep    func() (toRemove *os.File, err error)
 		wantCfg *Configuration
 		wantErr bool
 	}{
 		{
 			name: "success",
+			args: args{
+				overrideLocation: "",
+			},
 			prep: func() (toRemove *os.File, err error) {
 				toRemove, err = createTestTempFile(exampleJSON)
 				os.Stdin = toRemove
+				return
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaURL:        "4",
+			},
+		},
+		{
+			name: "success (with override)",
+			args: args{
+				overrideLocation: "./Test_getConfiguration.override.json",
+			},
+			prep: func() (toRemove *os.File, err error) {
+				toRemove, err = createTestFile("./Test_getConfiguration.override.json", exampleJSON)
 				return
 			},
 			wantCfg: &Configuration{
@@ -69,7 +92,7 @@ func Test_getConfiguration(t *testing.T) {
 				defer toRemove.Close()
 			}
 
-			gotCfg, err := getConfiguration()
+			gotCfg, err := getConfiguration(tt.args.overrideLocation)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("getConfiguration() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -82,15 +105,20 @@ func Test_getConfiguration(t *testing.T) {
 }
 
 func Test_getSource(t *testing.T) {
+	type args struct {
+		overrideLocation string
+	}
+
 	tests := []struct {
 		name string
+		args args
 		prep func() (toRemove *os.File, err error)
 
 		wantKey string
 		wantErr bool
 	}{
 		{
-			name: "stdin",
+			name: "success (stdin)",
 			prep: func() (tmp *os.File, err error) {
 				if tmp, err = createTestTempFile(`{"a":"foo"}`); err != nil {
 					return
@@ -102,21 +130,31 @@ func Test_getSource(t *testing.T) {
 			wantKey: "stdin",
 		},
 		{
-			name: "config.json",
+			name: "success (config.json)",
 			prep: func() (tmp *os.File, err error) {
 				return createTestFile("./config.json", `{"a":"foo"}`)
 			},
 			wantKey: "./config.json",
 		},
 		{
-			name: "config.toml",
+			name: "success (config.toml)",
 			prep: func() (tmp *os.File, err error) {
 				return createTestFile("./config.toml", `{"a":"foo"}`)
 			},
 			wantKey: "./config.toml",
 		},
 		{
-			name: "no config",
+			name: "success (override location)",
+			args: args{
+				overrideLocation: "./Test_getSource.override.json",
+			},
+			prep: func() (tmp *os.File, err error) {
+				return createTestFile("./Test_getSource.override.json", exampleJSON)
+			},
+			wantKey: "./Test_getSource.override.json",
+		},
+		{
+			name: "failure (no config)",
 			prep: func() (tmp *os.File, err error) {
 				return nil, nil
 			},
@@ -139,7 +177,7 @@ func Test_getSource(t *testing.T) {
 				defer toRemove.Close()
 			}
 
-			_, gotKey, err := getSource()
+			_, gotKey, err := getSource(tt.args.overrideLocation)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("getSource() error = %v, wantErr %v", err, tt.wantErr)
 				return
