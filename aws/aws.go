@@ -33,23 +33,18 @@ var (
 // New returns a new provider with the given options.
 // Returns error if no profile is set
 func New(prf Profile, opts ...Option) (Provider, error) {
-	p := Provider{}
-	p.Profile = prf
-
-	for _, opt := range opts {
-		opt(&p)
+	p := Provider{
+		fs:         fsmanager.NewDefault(),
+		httpClient: client.NewDefault(),
+		Profile:    prf,
 	}
 
 	if p.Profile.IsEmpty() {
 		return p, ErrMissingProfile
 	}
 
-	if p.fs == nil {
-		p.fs = fsmanager.NewDefault()
-	}
-
-	if p.httpClient == nil {
-		p.httpClient = client.NewDefault()
+	for _, opt := range opts {
+		opt(&p)
 	}
 
 	return p, nil

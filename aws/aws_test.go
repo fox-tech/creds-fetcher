@@ -122,7 +122,9 @@ func TestNew(t *testing.T) {
 			args: args{p: emptyProfile},
 			expect: expect{
 				p: Provider{
-					Profile: Profile{},
+					Profile:    Profile{},
+					fs:         defaultFs,
+					httpClient: defaultClient,
 				},
 				err: ErrMissingProfile,
 			},
