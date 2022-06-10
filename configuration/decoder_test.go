@@ -29,12 +29,7 @@ func Test_decoder_decodeOrReset(t *testing.T) {
 					return
 				},
 			},
-			wantCfg: &Configuration{
-				AWSProviderARN: "1",
-				AWSRoleARN:     "2",
-				OktaClientID:   "3",
-				OktaURL:        "4",
-			},
+			wantCfg: exampleConfiguration,
 		},
 		{
 			name: "failure (closed)",

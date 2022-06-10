@@ -9,6 +9,7 @@ var (
 	ErrInvalidAWSProviderARN        = errors.New("invalid aws_provider_arn, cannot be empty")
 	ErrInvalidAWSRoleARN            = errors.New("invalid aws_role_arn, cannot be empty")
 	ErrInvalidOktaClientID          = errors.New("invalid okta_client_id, cannot be empty")
+	ErrInvalidOktaAppID             = errors.New("invalid okta_app_id, cannot be empty")
 	ErrInvalidOktaURL               = errors.New("invalid okta_url, cannot be empty")
 )
 
@@ -48,6 +49,7 @@ type Configuration struct {
 	AWSProviderARN string `toml:"aws_provider_arn" json:"aws_provider_arn" env:"aws_provider_arn"`
 	AWSRoleARN     string `toml:"aws_role_arn" json:"aws_role_arn" env:"aws_role_arn"`
 	OktaClientID   string `toml:"okta_client_id" json:"okta_client_id" env:"okta_client_id"`
+	OktaAppID      string `toml:"okta_app_id" json:"okta_app_id" env:"okta_app_id"`
 	OktaURL        string `toml:"okta_url" json:"okta_url" env:"okta_url"`
 }
 
@@ -62,6 +64,10 @@ func (c *Configuration) Validate() (err error) {
 
 	if len(c.OktaClientID) == 0 {
 		return ErrInvalidOktaClientID
+	}
+
+	if len(c.OktaAppID) == 0 {
+		return ErrInvalidOktaAppID
 	}
 
 	if len(c.OktaURL) == 0 {

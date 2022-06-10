@@ -14,7 +14,8 @@ const (
 	"aws_provider_arn" : "1",
 	"aws_role_arn" : "2",
 	"okta_client_id" : "3",
-	"okta_url" : "4"				
+	"okta_app_id" : "4",
+	"okta_url" : "5"				
 }
 `
 
@@ -22,7 +23,8 @@ const (
 {
 	"aws_role_arn" : "2",
 	"okta_client_id" : "3",
-	"okta_url" : "4"				
+	"okta_app_id" : "4",
+	"okta_url" : "5"				
 }
 `
 	exampleJSONArray = `["hello world", "foo", "bar", "baz"]`
@@ -31,9 +33,18 @@ const (
 aws_provider_arn = "1"
 aws_role_arn = "2"
 okta_client_id = "3"
-okta_url = "4"
+okta_app_id = "4"
+okta_url = "5"
 `
 )
+
+var exampleConfiguration = &Configuration{
+	AWSProviderARN: "1",
+	AWSRoleARN:     "2",
+	OktaClientID:   "3",
+	OktaAppID:      "4",
+	OktaURL:        "5",
+}
 
 func TestNew(t *testing.T) {
 	type args struct {
@@ -55,12 +66,7 @@ func TestNew(t *testing.T) {
 				os.Stdin = toRemove
 				return
 			},
-			wantCfg: &Configuration{
-				AWSProviderARN: "1",
-				AWSRoleARN:     "2",
-				OktaClientID:   "3",
-				OktaURL:        "4",
-			},
+			wantCfg: exampleConfiguration,
 		},
 		{
 			name: "success (override location)",
@@ -70,12 +76,7 @@ func TestNew(t *testing.T) {
 			prep: func() (tmp *os.File, err error) {
 				return createTestFile("./Test_New.override.json", exampleJSON)
 			},
-			wantCfg: &Configuration{
-				AWSProviderARN: "1",
-				AWSRoleARN:     "2",
-				OktaClientID:   "3",
-				OktaURL:        "4",
-			},
+			wantCfg: exampleConfiguration,
 		},
 		{
 			name: "failure (invalid configuration)",
@@ -132,6 +133,7 @@ func TestConfiguration_Validate(t *testing.T) {
 		AWSProviderARN string
 		AWSRoleARN     string
 		OktaClientID   string
+		OktaAppID      string
 		OktaURL        string
 	}
 
@@ -146,7 +148,8 @@ func TestConfiguration_Validate(t *testing.T) {
 				AWSProviderARN: "1",
 				AWSRoleARN:     "2",
 				OktaClientID:   "3",
-				OktaURL:        "4",
+				OktaAppID:      "4",
+				OktaURL:        "5",
 			},
 		},
 		{
@@ -155,7 +158,8 @@ func TestConfiguration_Validate(t *testing.T) {
 				AWSProviderARN: "",
 				AWSRoleARN:     "2",
 				OktaClientID:   "3",
-				OktaURL:        "4",
+				OktaAppID:      "4",
+				OktaURL:        "5",
 			},
 			wantErr: true,
 		},
@@ -165,7 +169,8 @@ func TestConfiguration_Validate(t *testing.T) {
 				AWSProviderARN: "1",
 				AWSRoleARN:     "",
 				OktaClientID:   "3",
-				OktaURL:        "4",
+				OktaAppID:      "4",
+				OktaURL:        "5",
 			},
 			wantErr: true,
 		},
@@ -175,7 +180,19 @@ func TestConfiguration_Validate(t *testing.T) {
 				AWSProviderARN: "1",
 				AWSRoleARN:     "2",
 				OktaClientID:   "",
-				OktaURL:        "4",
+				OktaAppID:      "4",
+				OktaURL:        "5",
+			},
+			wantErr: true,
+		},
+		{
+			name: "failure (missing OktaAppID)",
+			fields: fields{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaAppID:      "",
+				OktaURL:        "5",
 			},
 			wantErr: true,
 		},
@@ -185,6 +202,7 @@ func TestConfiguration_Validate(t *testing.T) {
 				AWSProviderARN: "1",
 				AWSRoleARN:     "2",
 				OktaClientID:   "3",
+				OktaAppID:      "4",
 				OktaURL:        "",
 			},
 			wantErr: true,
@@ -197,8 +215,10 @@ func TestConfiguration_Validate(t *testing.T) {
 				AWSProviderARN: tt.fields.AWSProviderARN,
 				AWSRoleARN:     tt.fields.AWSRoleARN,
 				OktaClientID:   tt.fields.OktaClientID,
+				OktaAppID:      tt.fields.OktaAppID,
 				OktaURL:        tt.fields.OktaURL,
 			}
+
 			if err := c.Validate(); (err != nil) != tt.wantErr {
 				t.Errorf("Configuration.Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

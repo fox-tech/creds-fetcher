@@ -33,12 +33,7 @@ func Test_getConfiguration(t *testing.T) {
 				os.Stdin = toRemove
 				return
 			},
-			wantCfg: &Configuration{
-				AWSProviderARN: "1",
-				AWSRoleARN:     "2",
-				OktaClientID:   "3",
-				OktaURL:        "4",
-			},
+			wantCfg: exampleConfiguration,
 		},
 		{
 			name: "success (with override)",
@@ -49,12 +44,7 @@ func Test_getConfiguration(t *testing.T) {
 				toRemove, err = createTestFile("./Test_getConfiguration.override.json", exampleJSON)
 				return
 			},
-			wantCfg: &Configuration{
-				AWSProviderARN: "1",
-				AWSRoleARN:     "2",
-				OktaClientID:   "3",
-				OktaURL:        "4",
-			},
+			wantCfg: exampleConfiguration,
 		},
 		{
 			name: "failure (closed file)",
@@ -425,12 +415,7 @@ func Test_parseReader(t *testing.T) {
 					return
 				},
 			},
-			wantCfg: &Configuration{
-				AWSProviderARN: "1",
-				AWSRoleARN:     "2",
-				OktaClientID:   "3",
-				OktaURL:        "4",
-			},
+			wantCfg: exampleConfiguration,
 		},
 		{
 			name: "success (toml)",
@@ -440,12 +425,7 @@ func Test_parseReader(t *testing.T) {
 					return
 				},
 			},
-			wantCfg: &Configuration{
-				AWSProviderARN: "1",
-				AWSRoleARN:     "2",
-				OktaClientID:   "3",
-				OktaURL:        "4",
-			},
+			wantCfg: exampleConfiguration,
 		},
 		{
 			name: "failure (plaintext)",
@@ -533,12 +513,7 @@ func Test_decodeAsTOML(t *testing.T) {
 			args: args{
 				r: bytes.NewBufferString(exampleTOML),
 			},
-			wantCfg: &Configuration{
-				AWSProviderARN: "1",
-				AWSRoleARN:     "2",
-				OktaClientID:   "3",
-				OktaURL:        "4",
-			},
+			wantCfg: exampleConfiguration,
 		},
 		{
 			name: "failure (json array)",
@@ -593,12 +568,7 @@ func Test_decodeAsJSON(t *testing.T) {
 			args: args{
 				r: bytes.NewBufferString(exampleJSON),
 			},
-			wantCfg: &Configuration{
-				AWSProviderARN: "1",
-				AWSRoleARN:     "2",
-				OktaClientID:   "3",
-				OktaURL:        "4",
-			},
+			wantCfg: exampleConfiguration,
 		},
 		{
 			name: "failure (array)",
