@@ -31,6 +31,76 @@ okta_url = "4"
 `
 )
 
+func Test_getConfiguration(t *testing.T) {
+	tests := []struct {
+		name    string
+		prep    func() (toRemove *os.File, err error)
+		wantCfg *Configuration
+		wantErr bool
+	}{
+		{
+			name: "success",
+			prep: func() (toRemove *os.File, err error) {
+				toRemove, err = createTestTempFile(exampleJSON)
+				os.Stdin = toRemove
+				return
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaURL:        "4",
+			},
+		},
+		{
+			name: "failure (closed file)",
+			prep: func() (toRemove *os.File, err error) {
+				toRemove, err = createTestClosedTempfile()
+				os.Stdin = toRemove
+				return
+			},
+			wantErr: true,
+		},
+		{
+			name: "failure (decode error)",
+			prep: func() (toRemove *os.File, err error) {
+				toRemove, err = createTestTempFile("hello world")
+				os.Stdin = toRemove
+				return
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var (
+				toRemove *os.File
+				err      error
+			)
+
+			if toRemove, err = tt.prep(); err != nil {
+				t.Errorf("getConfiguration() error preparing test: %v", err)
+				return
+			}
+
+			if toRemove != nil {
+				defer os.Remove(toRemove.Name())
+				defer toRemove.Close()
+			}
+
+			gotCfg, err := getConfiguration()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getConfiguration() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotCfg, tt.wantCfg) {
+				t.Errorf("getConfiguration() = %v, want %v", gotCfg, tt.wantCfg)
+			}
+		})
+	}
+}
+
 func Test_getSource(t *testing.T) {
 	tests := []struct {
 		name string
