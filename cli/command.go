@@ -28,24 +28,30 @@ func login(flags FlagMap) error {
 		return fmt.Errorf("login : %w", err)
 	}
 
-	config, err := cfg.New("")
+	cf, err := findFlag(FlagConfig, flags)
+	if err != nil {
+		return fmt.Errorf("login : %w", err)
+	}
+
+	profName := pf.Value.(string)
+	if profName == "" {
+		profName = defaultKey
+	}
+
+	configFile := cf.Value.(string)
+
+	config, err := cfg.New(profName, configFile)
 	if err != nil {
 		return fmt.Errorf("%w:  %v", ErrNoConfig, err)
 	}
 
-	pCfg, err := getValueOrDefault(pf.Value.(string), []cfg.Configuration{*config})
-	if err != nil {
-		return err
-	}
-
 	provider, err := aws.New(aws.Profile{
-		// Name:         pCfg.Name,
-		Name:         "default",
-		RoleARN:      pCfg.AWSRoleARN,
-		PrincipalARN: pCfg.AWSProviderARN,
+		Name:         profName,
+		RoleARN:      config.AWSRoleARN,
+		PrincipalARN: config.AWSProviderARN,
 	})
 
-	oktaClient, _ := okta.New(pCfg.OktaClientID, pCfg.OktaURL, provider, okta.SetAppID(pCfg.OktaAppID))
+	oktaClient, _ := okta.New(config.OktaClientID, config.OktaURL, provider, okta.SetAppID(config.OktaAppID))
 	dev, err := oktaClient.PreAuthorize()
 	if err != nil {
 		panic(err)

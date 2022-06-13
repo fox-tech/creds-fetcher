@@ -7,6 +7,7 @@ import (
 
 const (
 	FlagProfile = "profile"
+	FlagConfig  = "config"
 )
 
 type Flag struct {
@@ -17,15 +18,21 @@ type Flag struct {
 
 type FlagMap map[string]Flag
 
-func (c CLI) ParseFlags() FlagMap {
+func (c *CLI) ParseFlags(name string, args []string) {
 	// Define all flags here, then add them to the map
-	pFlag := flag.String(FlagProfile, "", "profile to use in command")
-	flag.Parse()
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+	profileFlag := fs.String(FlagProfile, "", "profile to use in command")
+	configFlag := fs.String(FlagConfig, "", "path to config file")
+	fs.Parse(args)
 
-	return map[string]Flag{
+	c.flags = FlagMap{
 		FlagProfile: {
 			Name:  FlagProfile,
-			Value: *pFlag,
+			Value: *profileFlag,
+		},
+		FlagConfig: {
+			Name:  FlagConfig,
+			Value: *configFlag,
 		},
 	}
 }

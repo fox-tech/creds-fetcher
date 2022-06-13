@@ -2,11 +2,8 @@ package cli
 
 import (
 	"errors"
-	"flag"
-	"fmt"
 	"log"
-
-	cfg "github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/configuration"
+	"os"
 )
 
 const (
@@ -14,36 +11,40 @@ const (
 )
 
 var (
-	ErrNotFound = errors.New("not found")
-	ErrNoConfig = errors.New("failed to obtain configuration")
+	ErrNotFound  = errors.New("not found")
+	ErrNoConfig  = errors.New("failed to obtain configuration")
+	ErrNoCommand = errors.New("missing command name")
 )
 
 type CLI struct {
-	commands map[string]Command
+	commands       map[string]Command
+	currentCommand string
+	flags          FlagMap
 }
 
 func New() CLI {
 	c := CLI{
 		commands: map[string]Command{},
+		flags:    FlagMap{},
 	}
 
 	c.AddCommand(loginCmd)
 	return c
 }
 
-func (c CLI) Execute() error {
+func (c CLI) Execute(args ...string) error {
+	if err := c.ParseArguments(); err != nil {
+		log.Fatalf("parsing arguments: %v", err)
+		return err
+	}
 
-	// Improvement: add handler for command arguments
-	flags := c.ParseFlags()
-	cmd := flag.Arg(0)
-
-	command, ok := c.commands[cmd]
+	command, ok := c.commands[c.currentCommand]
 	if !ok {
 		log.Fatal("command not found")
 		return ErrNotFound
 	}
 
-	if err := command.f(flags); err != nil {
+	if err := command.f(c.flags); err != nil {
 		log.Fatal(err)
 		return err
 	}
@@ -51,36 +52,24 @@ func (c CLI) Execute() error {
 	return nil
 }
 
-func (c CLI) AddCommand(cmd Command) {
+func (c *CLI) AddCommand(cmd Command) {
 	c.commands[cmd.name] = cmd
 }
 
-func getConfig() (cfg.Configuration, error) {
-	// load configuration
-	config, err := cfg.New("")
-	if err != nil {
-		return cfg.Configuration{}, fmt.Errorf("%w:  %v", ErrNoConfig, err)
-	}
-	return *config, nil
-}
-
-func getValueOrDefault(key string, values []cfg.Configuration) (cfg.Configuration, error) {
-	d := cfg.Configuration{}
-	dFound := false
-	for i := range values {
-		if values[i].OktaAppID == key {
-			return values[i], nil
-		}
-
-		if values[i].OktaAppID == defaultKey {
-			d = values[i]
-			dFound = true
-		}
+// Parse Arguments obtains command line arguments, currently it only returns
+// the command name, since it is the only one being used
+func (c *CLI) ParseArguments() error {
+	args := os.Args
+	if len(args) == 1 {
+		return ErrNoCommand
 	}
 
-	if dFound {
-		return d, nil
+	c.currentCommand = args[1]
+	flags := []string{}
+	if len(args) > 2 {
+		flags = args[2:]
 	}
+	c.ParseFlags(c.currentCommand, flags)
 
-	return d, fmt.Errorf("%w: value not found and default not set", ErrNotFound)
+	return nil
 }
