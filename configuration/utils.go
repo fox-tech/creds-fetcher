@@ -8,10 +8,9 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/env"
 )
 
-func getConfiguration(overrideLocation string) (cfg *Configuration, err error) {
+func getConfigurations(overrideLocation string) (cfgs map[string]*Configuration, err error) {
 	var (
 		source io.ReadSeekCloser
 		key    string
@@ -22,18 +21,11 @@ func getConfiguration(overrideLocation string) (cfg *Configuration, err error) {
 	}
 	defer source.Close()
 
-	if cfg, err = parseReader(source); err != nil {
+	if cfgs, err = parseReader(source); err != nil {
 		err = fmt.Errorf("error parsing <%s>: %v", key, err)
 		return
 	}
 
-	var overrideValues Configuration
-	if err = env.Unmarshal(&overrideValues); err != nil {
-		err = fmt.Errorf("error Unmarshaling environment variables: %v", err)
-		return
-	}
-
-	cfg.OverrideWith(&overrideValues)
 	return
 }
 
@@ -83,7 +75,7 @@ func getReaderLength(r io.ReadSeeker) (n int64, err error) {
 	return
 }
 
-func parseReader(r io.ReadSeeker) (cfg *Configuration, err error) {
+func parseReader(r io.ReadSeeker) (cfgs map[string]*Configuration, err error) {
 	var length int64
 	if length, err = getReaderLength(r); err != nil {
 		return
@@ -95,7 +87,7 @@ func parseReader(r io.ReadSeeker) (cfg *Configuration, err error) {
 	}
 
 	for _, d := range decoders {
-		if cfg, err = d.decodeOrReset(r); err == nil {
+		if cfgs, err = d.decodeOrReset(r); err == nil {
 			return
 		}
 	}
@@ -104,22 +96,12 @@ func parseReader(r io.ReadSeeker) (cfg *Configuration, err error) {
 	return
 }
 
-func decodeAsTOML(r io.Reader) (cfg *Configuration, err error) {
-	var c Configuration
-	if _, err = toml.NewDecoder(r).Decode(&c); err != nil {
-		return
-	}
-
-	cfg = &c
+func decodeAsTOML(r io.Reader) (cfgs map[string]*Configuration, err error) {
+	_, err = toml.NewDecoder(r).Decode(&cfgs)
 	return
 }
 
-func decodeAsJSON(r io.Reader) (cfg *Configuration, err error) {
-	var c Configuration
-	if err = json.NewDecoder(r).Decode(&c); err != nil {
-		return
-	}
-
-	cfg = &c
+func decodeAsJSON(r io.Reader) (cfgs map[string]*Configuration, err error) {
+	err = json.NewDecoder(r).Decode(&cfgs)
 	return
 }

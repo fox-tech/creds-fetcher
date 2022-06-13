@@ -7,7 +7,7 @@ Configuration is a helper utility which attempts load Configuration values from 
 ```go
 
 func ExampleNew() {
-	cfg, err := New("")
+	cfg, err := New("my_profile", "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -21,7 +21,7 @@ func ExampleNew() {
 ```go
 
 func ExampleNew_with_override() {
-	cfg, err := New("./path/to/config/config.json")
+	cfg, err := New("my_profile", "./path/to/config/config.json")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -11,58 +11,43 @@ import (
 	"testing"
 )
 
-func Test_getConfiguration(t *testing.T) {
+func Test_getConfigurations(t *testing.T) {
 	type args struct {
+		profile          string
 		overrideLocation string
 	}
 
 	tests := []struct {
-		name    string
-		args    args
-		prep    func() (toRemove *os.File, err error)
-		wantCfg *Configuration
-		wantErr bool
+		name     string
+		args     args
+		prep     func() (toRemove *os.File, err error)
+		wantCfgs map[string]*Configuration
+		wantErr  bool
 	}{
 		{
 			name: "success",
 			args: args{
 				overrideLocation: "",
+				profile:          "my_profile",
 			},
 			prep: func() (toRemove *os.File, err error) {
 				toRemove, err = createTestTempFile(exampleJSON)
 				os.Stdin = toRemove
 				return
 			},
-			wantCfg: exampleConfiguration,
+			wantCfgs: exampleConfigurations,
 		},
 		{
 			name: "success (with override location)",
 			args: args{
 				overrideLocation: "./Test_getConfiguration.override.json",
+				profile:          "my_profile",
 			},
 			prep: func() (toRemove *os.File, err error) {
 				toRemove, err = createTestFile("./Test_getConfiguration.override.json", exampleJSON)
 				return
 			},
-			wantCfg: exampleConfiguration,
-		},
-		{
-			name: "success (with override values)",
-			args: args{},
-			prep: func() (toRemove *os.File, err error) {
-				toRemove, err = createTestTempFile(exampleJSON)
-				os.Stdin = toRemove
-				os.Setenv("AWS_PROVIDER_ARN", "1n")
-				os.Setenv("AWS_ROLE_ARN", "2n")
-				return
-			},
-			wantCfg: &Configuration{
-				AWSProviderARN: "1n",
-				AWSRoleARN:     "2n",
-				OktaClientID:   "3",
-				OktaAppID:      "4",
-				OktaURL:        "5",
-			},
+			wantCfgs: exampleConfigurations,
 		},
 		{
 			name: "failure (closed file)",
@@ -94,7 +79,7 @@ func Test_getConfiguration(t *testing.T) {
 			os.Clearenv()
 
 			if toRemove, err = tt.prep(); err != nil {
-				t.Errorf("getConfiguration() error preparing test: %v", err)
+				t.Errorf("getConfigurations() error preparing test: %v", err)
 				return
 			}
 
@@ -103,13 +88,13 @@ func Test_getConfiguration(t *testing.T) {
 				defer toRemove.Close()
 			}
 
-			gotCfg, err := getConfiguration(tt.args.overrideLocation)
+			gotCfgs, err := getConfigurations(tt.args.overrideLocation)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("getConfiguration() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("getConfigurations() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(gotCfg, tt.wantCfg) {
-				t.Errorf("getConfiguration() = %v, want %v", gotCfg, tt.wantCfg)
+			if !reflect.DeepEqual(gotCfgs, tt.wantCfgs) {
+				t.Errorf("getConfigurations() = %+v, want %+v", gotCfgs["my_profile"], tt.wantCfgs["my_profile"])
 			}
 		})
 	}
@@ -422,10 +407,10 @@ func Test_parseReader(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		args    args
-		wantCfg *Configuration
-		wantErr bool
+		name     string
+		args     args
+		wantCfgs map[string]*Configuration
+		wantErr  bool
 	}{
 		{
 			name: "success (json)",
@@ -435,7 +420,7 @@ func Test_parseReader(t *testing.T) {
 					return
 				},
 			},
-			wantCfg: exampleConfiguration,
+			wantCfgs: exampleConfigurations,
 		},
 		{
 			name: "success (toml)",
@@ -445,7 +430,7 @@ func Test_parseReader(t *testing.T) {
 					return
 				},
 			},
-			wantCfg: exampleConfiguration,
+			wantCfgs: exampleConfigurations,
 		},
 		{
 			name: "failure (plaintext)",
@@ -510,8 +495,8 @@ func Test_parseReader(t *testing.T) {
 				t.Errorf("parseReader() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(gotCfg, tt.wantCfg) {
-				t.Errorf("parseReader() = %v, want %v", gotCfg, tt.wantCfg)
+			if !reflect.DeepEqual(gotCfg, tt.wantCfgs) {
+				t.Errorf("parseReader() = %v, want %v", gotCfg, tt.wantCfgs)
 			}
 		})
 	}
@@ -523,17 +508,17 @@ func Test_decodeAsTOML(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		args    args
-		wantCfg *Configuration
-		wantErr bool
+		name     string
+		args     args
+		wantCfgs map[string]*Configuration
+		wantErr  bool
 	}{
 		{
 			name: "success",
 			args: args{
 				r: bytes.NewBufferString(exampleTOML),
 			},
-			wantCfg: exampleConfiguration,
+			wantCfgs: exampleConfigurations,
 		},
 		{
 			name: "failure (json array)",
@@ -565,8 +550,8 @@ func Test_decodeAsTOML(t *testing.T) {
 				t.Errorf("decodeAsTOML() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(gotCfg, tt.wantCfg) {
-				t.Errorf("decodeAsTOML() = %v, want %v", gotCfg, tt.wantCfg)
+			if !reflect.DeepEqual(gotCfg, tt.wantCfgs) {
+				t.Errorf("decodeAsTOML() = %v, want %v", gotCfg, tt.wantCfgs)
 			}
 		})
 	}
@@ -578,17 +563,17 @@ func Test_decodeAsJSON(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		args    args
-		wantCfg *Configuration
-		wantErr bool
+		name     string
+		args     args
+		wantCfgs map[string]*Configuration
+		wantErr  bool
 	}{
 		{
 			name: "success",
 			args: args{
 				r: bytes.NewBufferString(exampleJSON),
 			},
-			wantCfg: exampleConfiguration,
+			wantCfgs: exampleConfigurations,
 		},
 		{
 			name: "failure (array)",
@@ -620,8 +605,8 @@ func Test_decodeAsJSON(t *testing.T) {
 				t.Errorf("decodeAsJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(gotCfg, tt.wantCfg) {
-				t.Errorf("decodeAsJSON() = %v, want %v", gotCfg, tt.wantCfg)
+			if !reflect.DeepEqual(gotCfg, tt.wantCfgs) {
+				t.Errorf("decodeAsJSON() = %v, want %v", gotCfg, tt.wantCfgs)
 			}
 		})
 	}

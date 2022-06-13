@@ -1,6 +1,11 @@
 package configuration
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/env"
+)
 
 var (
 	ErrNoConfiguration              = errors.New("no configuration file found")
@@ -37,8 +42,15 @@ var (
 // Once the initial configuration is loaded, the library will then check the os environment
 // variables. In order to determine if any variable overrides are required. If so, the provided
 // environment values which are set will be applied to the loaded configuration.
-func New(overrideLocation string) (cfg *Configuration, err error) {
-	if cfg, err = getConfiguration(overrideLocation); err != nil {
+func New(profile, overrideLocation string) (cfg *Configuration, err error) {
+	var cfgs map[string]*Configuration
+	if cfgs, err = getConfigurations(overrideLocation); err != nil {
+		return
+	}
+
+	var ok bool
+	if cfg, ok = cfgs[profile]; !ok {
+		err = fmt.Errorf("profile of <%s> not found", profile)
 		return
 	}
 
@@ -47,6 +59,13 @@ func New(overrideLocation string) (cfg *Configuration, err error) {
 		return
 	}
 
+	var overrideValues Configuration
+	if err = env.Unmarshal(&overrideValues); err != nil {
+		err = fmt.Errorf("error Unmarshaling environment variables: %v", err)
+		return
+	}
+
+	cfg.OverrideWith(&overrideValues)
 	return
 }
 
