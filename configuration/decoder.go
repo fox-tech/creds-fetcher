@@ -2,15 +2,15 @@ package configuration
 
 import "io"
 
-type decoder func(io.Reader) (*Configuration, error)
+type decoder func(io.Reader) (map[string]*Configuration, error)
 
-func (d decoder) decodeOrReset(r io.ReadSeeker) (cfg *Configuration, err error) {
+func (d decoder) decodeOrReset(r io.ReadSeeker) (cfgs map[string]*Configuration, err error) {
 	if r == nil {
 		err = ErrNilReader
 		return
 	}
 
-	if cfg, err = d(r); err == nil {
+	if cfgs, err = d(r); err == nil {
 		return
 	}
 
