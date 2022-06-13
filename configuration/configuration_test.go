@@ -73,7 +73,9 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			name: "success",
-			args: args{profile: "my_profile"},
+			args: args{
+				profile: "my_profile",
+			},
 			prep: func() (toRemove *os.File, err error) {
 				toRemove, err = createTestTempFile(exampleJSON)
 				os.Stdin = toRemove
@@ -114,6 +116,9 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name: "failure (invalid configuration)",
+			args: args{
+				profile: "my_profile",
+			},
 			prep: func() (toRemove *os.File, err error) {
 				toRemove, err = createTestTempFile(exampleJSONInvalid)
 				os.Stdin = toRemove
@@ -122,7 +127,22 @@ func TestNew(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "failure (missing profile)",
+			args: args{
+				profile: "",
+			},
+			prep: func() (toRemove *os.File, err error) {
+				toRemove, err = createTestTempFile(exampleJSON)
+				os.Stdin = toRemove
+				return
+			},
+			wantErr: true,
+		},
+		{
 			name: "failure (closed file)",
+			args: args{
+				profile: "my_profile",
+			},
 			prep: func() (toRemove *os.File, err error) {
 				toRemove, err = createTestClosedTempfile()
 				os.Stdin = toRemove
