@@ -53,6 +53,11 @@ type Provider struct {
 	Profile Profile
 }
 
+// IsEmpty verifies whether all fields of the profile are empty.
+func (p Profile) IsEmpty() bool {
+	return p.Name == "" || p.RoleARN == "" || p.PrincipalARN == ""
+}
+
 // httpClient defines the methods that the provider needs an http client to have
 type httpClient interface {
 	Get(r_url string, params map[string]string, body io.Reader) (*http.Response, error)
@@ -63,11 +68,6 @@ type httpClient interface {
 type fileSystemManager interface {
 	ReadFile(dir, filename string) ([]byte, error)
 	WriteFile(name string, data []byte) error
-}
-
-// IsEmpty verifies whether all fields of the profile are empty.
-func (p Profile) IsEmpty() bool {
-	return p.Name == "" || p.RoleARN == "" || p.PrincipalARN == ""
 }
 
 // New returns a new provider with the given options.
