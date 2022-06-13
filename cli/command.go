@@ -5,6 +5,7 @@ import (
 
 	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/aws"
 	cfg "github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/configuration"
+	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/okta"
 )
 
 type CommandBody func(FlagMap) error
@@ -24,7 +25,7 @@ var loginCmd = Command{
 func login(flags FlagMap) error {
 	pf, err := findFlag(FlagProfile, flags)
 	if err != nil {
-		return fmt.Errorf("get-credentials: %w", err)
+		return fmt.Errorf("login : %w", err)
 	}
 
 	config, err := cfg.New("")
