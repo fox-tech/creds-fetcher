@@ -12,6 +12,7 @@ var (
 	ErrInvalidOktaAppID             = errors.New("invalid okta_app_id, cannot be empty")
 	ErrInvalidOktaURL               = errors.New("invalid okta_url, cannot be empty")
 	ErrNilReader                    = errors.New("invalid reader, cannot be nil")
+	ErrInvalidProfileName           = errors.New("invalid profile name, cannot be empty")
 )
 
 var (
@@ -56,6 +57,7 @@ type Configuration struct {
 	OktaClientID   string `toml:"okta_client_id" json:"okta_client_id" env:"OKTA_CLIENT_ID"`
 	OktaAppID      string `toml:"okta_app_id" json:"okta_app_id" env:"OKTA_APP_ID"`
 	OktaURL        string `toml:"okta_url" json:"okta_url" env:"OKTA_URL"`
+	ProfileName    string `toml:"profile_name" json:"profile_name" env:"PROFILE_NAME"`
 }
 
 func (c *Configuration) OverrideWith(in *Configuration) {
@@ -77,6 +79,10 @@ func (c *Configuration) OverrideWith(in *Configuration) {
 
 	if len(in.OktaURL) > 0 {
 		c.OktaURL = in.OktaURL
+	}
+
+	if len(in.ProfileName) > 0 {
+		c.ProfileName = in.ProfileName
 	}
 }
 

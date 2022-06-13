@@ -15,7 +15,8 @@ const (
 	"aws_role_arn" : "2",
 	"okta_client_id" : "3",
 	"okta_app_id" : "4",
-	"okta_url" : "5"				
+	"okta_url" : "5",
+	"profile_name" : "6"				
 }
 `
 
@@ -24,7 +25,8 @@ const (
 	"aws_role_arn" : "2",
 	"okta_client_id" : "3",
 	"okta_app_id" : "4",
-	"okta_url" : "5"				
+	"okta_url" : "5",
+	"profile_name" : "6"				
 }
 `
 	exampleJSONArray = `["hello world", "foo", "bar", "baz"]`
@@ -35,6 +37,7 @@ aws_role_arn = "2"
 okta_client_id = "3"
 okta_app_id = "4"
 okta_url = "5"
+profile_name = "6"
 `
 )
 
@@ -44,6 +47,7 @@ var exampleConfiguration = &Configuration{
 	OktaClientID:   "3",
 	OktaAppID:      "4",
 	OktaURL:        "5",
+	ProfileName:    "6",
 }
 
 func TestNew(t *testing.T) {
@@ -135,6 +139,7 @@ func TestConfiguration_OverrideWith(t *testing.T) {
 		OktaClientID   string
 		OktaAppID      string
 		OktaURL        string
+		ProfileName    string
 	}
 
 	type args struct {
@@ -147,6 +152,7 @@ func TestConfiguration_OverrideWith(t *testing.T) {
 		OktaClientID:   "3",
 		OktaAppID:      "4",
 		OktaURL:        "5",
+		ProfileName:    "6",
 	}
 
 	tests := []struct {
@@ -169,6 +175,7 @@ func TestConfiguration_OverrideWith(t *testing.T) {
 				OktaClientID:   "3",
 				OktaAppID:      "4",
 				OktaURL:        "5",
+				ProfileName:    "6",
 			},
 		},
 		{
@@ -185,6 +192,7 @@ func TestConfiguration_OverrideWith(t *testing.T) {
 				OktaClientID:   "3",
 				OktaAppID:      "4",
 				OktaURL:        "5",
+				ProfileName:    "6",
 			},
 		},
 		{
@@ -201,6 +209,7 @@ func TestConfiguration_OverrideWith(t *testing.T) {
 				OktaClientID:   "3new",
 				OktaAppID:      "4",
 				OktaURL:        "5",
+				ProfileName:    "6",
 			},
 		},
 		{
@@ -217,6 +226,7 @@ func TestConfiguration_OverrideWith(t *testing.T) {
 				OktaClientID:   "3",
 				OktaAppID:      "4new",
 				OktaURL:        "5",
+				ProfileName:    "6",
 			},
 		},
 		{
@@ -233,6 +243,24 @@ func TestConfiguration_OverrideWith(t *testing.T) {
 				OktaClientID:   "3",
 				OktaAppID:      "4",
 				OktaURL:        "5new",
+				ProfileName:    "6",
+			},
+		},
+		{
+			name:   "Profile Name",
+			fields: baseFields,
+			args: args{
+				in: &Configuration{
+					ProfileName: "6new",
+				},
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaAppID:      "4",
+				OktaURL:        "5",
+				ProfileName:    "6new",
 			},
 		},
 		{
@@ -250,6 +278,7 @@ func TestConfiguration_OverrideWith(t *testing.T) {
 				OktaClientID:   "3",
 				OktaAppID:      "4",
 				OktaURL:        "5",
+				ProfileName:    "6",
 			},
 		},
 		{
@@ -268,6 +297,7 @@ func TestConfiguration_OverrideWith(t *testing.T) {
 				OktaClientID:   "3new",
 				OktaAppID:      "4new",
 				OktaURL:        "5new",
+				ProfileName:    "6",
 			},
 		},
 	}
@@ -280,6 +310,7 @@ func TestConfiguration_OverrideWith(t *testing.T) {
 				OktaClientID:   tt.fields.OktaClientID,
 				OktaAppID:      tt.fields.OktaAppID,
 				OktaURL:        tt.fields.OktaURL,
+				ProfileName:    tt.fields.ProfileName,
 			}
 			c.OverrideWith(tt.args.in)
 
@@ -298,6 +329,7 @@ func TestConfiguration_Validate(t *testing.T) {
 		OktaClientID   string
 		OktaAppID      string
 		OktaURL        string
+		ProfileName    string
 	}
 
 	tests := []struct {
@@ -313,6 +345,7 @@ func TestConfiguration_Validate(t *testing.T) {
 				OktaClientID:   "3",
 				OktaAppID:      "4",
 				OktaURL:        "5",
+				ProfileName:    "6",
 			},
 		},
 		{
@@ -323,6 +356,7 @@ func TestConfiguration_Validate(t *testing.T) {
 				OktaClientID:   "3",
 				OktaAppID:      "4",
 				OktaURL:        "5",
+				ProfileName:    "6",
 			},
 			wantErr: true,
 		},
@@ -334,6 +368,7 @@ func TestConfiguration_Validate(t *testing.T) {
 				OktaClientID:   "3",
 				OktaAppID:      "4",
 				OktaURL:        "5",
+				ProfileName:    "6",
 			},
 			wantErr: true,
 		},
@@ -345,6 +380,7 @@ func TestConfiguration_Validate(t *testing.T) {
 				OktaClientID:   "",
 				OktaAppID:      "4",
 				OktaURL:        "5",
+				ProfileName:    "6",
 			},
 			wantErr: true,
 		},
@@ -356,6 +392,7 @@ func TestConfiguration_Validate(t *testing.T) {
 				OktaClientID:   "3",
 				OktaAppID:      "",
 				OktaURL:        "5",
+				ProfileName:    "6",
 			},
 			wantErr: true,
 		},
@@ -370,6 +407,18 @@ func TestConfiguration_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "success (with missing ProfileName)",
+			fields: fields{
+				AWSProviderARN: "1",
+				AWSRoleARN:     "2",
+				OktaClientID:   "3",
+				OktaAppID:      "4",
+				OktaURL:        "5",
+				ProfileName:    "",
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -380,6 +429,7 @@ func TestConfiguration_Validate(t *testing.T) {
 				OktaClientID:   tt.fields.OktaClientID,
 				OktaAppID:      tt.fields.OktaAppID,
 				OktaURL:        tt.fields.OktaURL,
+				ProfileName:    tt.fields.ProfileName,
 			}
 
 			if err := c.Validate(); (err != nil) != tt.wantErr {
@@ -414,6 +464,7 @@ func ExampleConfiguration_OverrideWith() {
 		OktaClientID:   "3",
 		OktaAppID:      "4",
 		OktaURL:        "5",
+		ProfileName:    "6",
 	}
 
 	overrides := Configuration{
@@ -432,6 +483,7 @@ func ExampleConfiguration_Validate() {
 		AWSRoleARN:     "2",
 		OktaClientID:   "3",
 		OktaURL:        "4",
+		ProfileName:    "6",
 	}
 
 	if err := cfg.Validate(); err != nil {

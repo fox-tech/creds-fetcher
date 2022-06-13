@@ -62,6 +62,7 @@ func Test_getConfiguration(t *testing.T) {
 				OktaClientID:   "3",
 				OktaAppID:      "4",
 				OktaURL:        "5",
+				ProfileName:    "6",
 			},
 		},
 		{
