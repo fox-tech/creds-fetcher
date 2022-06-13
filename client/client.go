@@ -17,8 +17,8 @@ func NewDefault() defaultClient {
 	}
 }
 
-func (c defaultClient) Get(r_url string, params map[string]string, body io.Reader) (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodGet, r_url, body)
+func (c defaultClient) Get(getUrl string, params map[string]string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest(http.MethodGet, getUrl, body)
 	if err != nil {
 		return nil, err
 	}

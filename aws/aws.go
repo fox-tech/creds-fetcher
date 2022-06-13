@@ -2,7 +2,6 @@
 package aws
 
 import (
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +12,15 @@ import (
 	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/client"
 	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/fsmanager"
 	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/ini"
+)
+
+const (
+	// stsURL represents the AWS STS URL to enchange SAML assertion
+	// token for credentials
+	stsURL = "https://sts.amazonaws.com/oauth2/v1/token"
+	// TODO: How does this works for windows?
+	credentialsDirectory = ".aws"
+	credentialsFileName  = "credentials"
 )
 
 var (
@@ -29,6 +37,38 @@ var (
 	iniMarshal   = ini.Marshal
 	iniUnmarshal = ini.Unmarshal
 )
+
+// Profile indicates STS the principal and role to get credentials for
+type Profile struct {
+	Name         string
+	RoleARN      string
+	PrincipalARN string
+}
+
+// Provider exposes the methods to interact with AWS
+type Provider struct {
+	fs fileSystemManager
+	httpClient
+
+	Profile Profile
+}
+
+// httpClient defines the methods that the provider needs an http client to have
+type httpClient interface {
+	Get(r_url string, params map[string]string, body io.Reader) (*http.Response, error)
+}
+
+// fileSystemManager defines the methods that the provider needs a file system
+// manager to have
+type fileSystemManager interface {
+	ReadFile(dir, filename string) ([]byte, error)
+	WriteFile(name string, data []byte) error
+}
+
+// IsEmpty verifies whether all fields of the profile are empty.
+func (p Profile) IsEmpty() bool {
+	return p.Name == "" || p.RoleARN == "" || p.PrincipalARN == ""
+}
 
 // New returns a new provider with the given options.
 // Returns error if no profile is set
@@ -66,56 +106,6 @@ func (aws Provider) GenerateCredentials(saml string) error {
 	}
 
 	return nil
-}
-
-// getSTSCredentialsFromSAML uses provided saml string to requests AWS CLI
-// credentials using STS.
-func (p Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) {
-	log.Print("getting STS credentials...")
-
-	params := map[string]string{
-		"Version":       "2011-06-15",
-		"Action":        "AssumeRoleWithSAML",
-		"RoleArn":       p.Profile.RoleARN,
-		"PrincipalArn":  p.Profile.PrincipalARN,
-		"SAMLAssertion": saml,
-	}
-
-	resp, err := p.httpClient.Get(stsURL, params, nil)
-	defer resp.Body.Close()
-	if err != nil {
-		return credentials{}, fmt.Errorf("%w: %v", ErrBadRequest, err)
-	}
-
-	respBody, err := ioReadAll(resp.Body)
-	if err != nil {
-		return credentials{}, fmt.Errorf("%w: %v", ErrBadResponse, err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		errResponse := assumeRoleWiwthSAMLError{}
-
-		// ignoring unmarshall error to continue in case response does not have body
-		xml.Unmarshal(respBody, &errResponse)
-
-		switch resp.StatusCode {
-		case http.StatusBadRequest:
-			return credentials{}, fmt.Errorf("%w: status: %scode: %s message: %s", ErrBadRequest, resp.Status, errResponse.Error.Code, errResponse.Error.Message)
-		case http.StatusForbidden:
-			return credentials{}, fmt.Errorf("%w: status: %s, code: %s message: %s", ErrNotAuthorized, resp.Status, errResponse.Error.Code, errResponse.Error.Message)
-		default:
-			return credentials{}, fmt.Errorf("%w: status: %s, code: %s message: %s", ErrUnknown, resp.Status, errResponse.Error.Code, errResponse.Error.Message)
-		}
-	}
-
-	stsResp := assumeRoleWithSAMLResponse{}
-	if err := xml.Unmarshal(respBody, &stsResp); err != nil {
-		return credentials{}, fmt.Errorf("%w: could not unmarshall response: %v", ErrBadResponse, err)
-	}
-
-	log.Print("STS credentials retrieved")
-
-	return stsResp.AssumeRoleResult.Credentials, nil
 }
 
 // updateCredentialsFile reads exising credentials, adds or replaces the new credentials and saves them to file
