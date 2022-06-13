@@ -50,11 +50,11 @@ func New(overrideLocation string) (cfg *Configuration, err error) {
 }
 
 type Configuration struct {
-	AWSProviderARN string `toml:"aws_provider_arn" json:"aws_provider_arn" env:"aws_provider_arn"`
-	AWSRoleARN     string `toml:"aws_role_arn" json:"aws_role_arn" env:"aws_role_arn"`
-	OktaClientID   string `toml:"okta_client_id" json:"okta_client_id" env:"okta_client_id"`
-	OktaAppID      string `toml:"okta_app_id" json:"okta_app_id" env:"okta_app_id"`
-	OktaURL        string `toml:"okta_url" json:"okta_url" env:"okta_url"`
+	AWSProviderARN string `toml:"aws_provider_arn" json:"aws_provider_arn" env:"AWS_PROVIDER_ARN"`
+	AWSRoleARN     string `toml:"aws_role_arn" json:"aws_role_arn" env:"AWS_ROLE_ARN"`
+	OktaClientID   string `toml:"okta_client_id" json:"okta_client_id" env:"OKTA_CLIENT_ID"`
+	OktaAppID      string `toml:"okta_app_id" json:"okta_app_id" env:"OKTA_APP_ID"`
+	OktaURL        string `toml:"okta_url" json:"okta_url" env:"OKTA_URL"`
 }
 
 func (c *Configuration) OverrideWith(in *Configuration) {

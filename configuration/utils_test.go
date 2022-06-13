@@ -52,8 +52,8 @@ func Test_getConfiguration(t *testing.T) {
 			prep: func() (toRemove *os.File, err error) {
 				toRemove, err = createTestTempFile(exampleJSON)
 				os.Stdin = toRemove
-				os.Setenv("aws_provider_arn", "1n")
-				os.Setenv("aws_role_arn", "2n")
+				os.Setenv("AWS_PROVIDER_ARN", "1n")
+				os.Setenv("AWS_ROLE_ARN", "2n")
 				return
 			},
 			wantCfg: &Configuration{
