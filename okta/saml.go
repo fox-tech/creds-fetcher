@@ -2,22 +2,12 @@ package okta
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"golang.org/x/net/html"
 )
-
-// ErrSAMLRequest is returned when there's a failure related to the request.
-// The response is not the expected response or it failed to complete the
-// request.
-var ErrSAMLRequest = errors.New("saml request")
-
-// ErrSAMLResponse is returned when there's a failure reading the response from
-// the request.
-var ErrSAMLResponse = errors.New("saml response")
 
 // getSAML returns the SAML credential values after extracting it from the SSO
 // login endpoint of Okta. Returns non-nil error if the request goes wrong,
@@ -53,16 +43,6 @@ func (c Client) getSAML(sso accessToken) (string, error) {
 
 	return saml, nil
 }
-
-// ErrNoSAMLResponseFound is returned when the HTML from the SSO login has no
-// SAMLResponse tag in its body.
-var ErrNoSAMLResponseFound = errors.New("no SAMLResponse found")
-
-// ErrParsingHTML is returned when the HTML from the SSO login can't be parsed.
-// This probably will never happen because the HTML parser returns early on any
-// error, without error. And the only error that handles is io.EOF, as an exit
-// as well.
-var ErrParsingHTML = errors.New("parsing html")
 
 // extractSAML returns a base64 SAML Response from a hidden HTML input tag.
 // Returns non-nil error in case the HTML can't be parsed or can't find a

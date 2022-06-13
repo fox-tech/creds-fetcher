@@ -2,7 +2,6 @@ package okta
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -31,13 +30,6 @@ type errorResponse struct {
 	Error       string `json:"error"`
 	Description string `json:"error_description"`
 }
-
-// ErrPreAuthorizeJSONDecode is returned when the JSON response from
-// PreAuthorize failed to decode.
-var ErrPreAuthorizeJSONDecode = errors.New("json decode")
-
-// ErrPreAuthorizeRequest is returned when the PreAuthorize request failed.
-var ErrPreAuthorizeRequest = errors.New("preauthorize request")
 
 // PreAuthorize returns a Device Authorization with a URL to be shown to the
 // user. This Device Authorization then is passed to the Authorize method to
