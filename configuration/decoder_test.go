@@ -66,6 +66,16 @@ func Test_decoder_decodeOrReset(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "failure (nil reader)",
+			d:    decodeAsJSON,
+			args: args{
+				getReader: func() (r io.ReadSeeker, err error) {
+					return
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {

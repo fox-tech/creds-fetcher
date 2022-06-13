@@ -11,6 +11,7 @@ var (
 	ErrInvalidOktaClientID          = errors.New("invalid okta_client_id, cannot be empty")
 	ErrInvalidOktaAppID             = errors.New("invalid okta_app_id, cannot be empty")
 	ErrInvalidOktaURL               = errors.New("invalid okta_url, cannot be empty")
+	ErrNilReader                    = errors.New("invalid reader, cannot be nil")
 )
 
 var (
