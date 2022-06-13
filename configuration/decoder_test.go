@@ -14,11 +14,11 @@ func Test_decoder_decodeOrReset(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		d       decoder
-		args    args
-		wantCfg *Configuration
-		wantErr bool
+		name     string
+		d        decoder
+		args     args
+		wantCfgs map[string]*Configuration
+		wantErr  bool
 	}{
 		{
 			name: "success",
@@ -29,7 +29,7 @@ func Test_decoder_decodeOrReset(t *testing.T) {
 					return
 				},
 			},
-			wantCfg: exampleConfiguration,
+			wantCfgs: exampleConfigurations,
 		},
 		{
 			name: "failure (closed)",
@@ -100,8 +100,8 @@ func Test_decoder_decodeOrReset(t *testing.T) {
 				return
 			}
 
-			if !reflect.DeepEqual(gotCfg, tt.wantCfg) {
-				t.Errorf("decoder.decodeOrReset() = %v, want %v", gotCfg, tt.wantCfg)
+			if !reflect.DeepEqual(gotCfg, tt.wantCfgs) {
+				t.Errorf("decoder.decodeOrReset() = %v, want %v", gotCfg, tt.wantCfgs)
 			}
 		})
 	}

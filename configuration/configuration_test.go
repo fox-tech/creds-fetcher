@@ -11,25 +11,30 @@ import (
 const (
 	exampleJSON = `
 {
-	"aws_provider_arn" : "1",
-	"aws_role_arn" : "2",
-	"okta_client_id" : "3",
-	"okta_app_id" : "4",
-	"okta_url" : "5"				
+	"my_profile" : {
+		"aws_provider_arn" : "1",
+		"aws_role_arn" : "2",
+		"okta_client_id" : "3",
+		"okta_app_id" : "4",
+		"okta_url" : "5"
+	}			
 }
 `
 
 	exampleJSONInvalid = `
 {
-	"aws_role_arn" : "2",
-	"okta_client_id" : "3",
-	"okta_app_id" : "4",
-	"okta_url" : "5"				
+	"my_profile" : {
+		"aws_role_arn" : "2",
+		"okta_client_id" : "3",
+		"okta_app_id" : "4",
+		"okta_url" : "5"				
+	}
 }
 `
 	exampleJSONArray = `["hello world", "foo", "bar", "baz"]`
 
 	exampleTOML = `
+[my_profile]
 aws_provider_arn = "1"
 aws_role_arn = "2"
 okta_client_id = "3"
@@ -38,16 +43,23 @@ okta_url = "5"
 `
 )
 
-var exampleConfiguration = &Configuration{
-	AWSProviderARN: "1",
-	AWSRoleARN:     "2",
-	OktaClientID:   "3",
-	OktaAppID:      "4",
-	OktaURL:        "5",
-}
+var (
+	exampleConfiguration = &Configuration{
+		AWSProviderARN: "1",
+		AWSRoleARN:     "2",
+		OktaClientID:   "3",
+		OktaAppID:      "4",
+		OktaURL:        "5",
+	}
+
+	exampleConfigurations = map[string]*Configuration{
+		"my_profile": exampleConfiguration,
+	}
+)
 
 func TestNew(t *testing.T) {
 	type args struct {
+		profile          string
 		overrideLocation string
 	}
 
@@ -61,6 +73,7 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			name: "success",
+			args: args{profile: "my_profile"},
 			prep: func() (toRemove *os.File, err error) {
 				toRemove, err = createTestTempFile(exampleJSON)
 				os.Stdin = toRemove
@@ -71,12 +84,33 @@ func TestNew(t *testing.T) {
 		{
 			name: "success (override location)",
 			args: args{
+				profile:          "my_profile",
 				overrideLocation: "./Test_New.override.json",
 			},
 			prep: func() (tmp *os.File, err error) {
 				return createTestFile("./Test_New.override.json", exampleJSON)
 			},
 			wantCfg: exampleConfiguration,
+		},
+		{
+			name: "success (with override values)",
+			args: args{
+				profile: "my_profile",
+			},
+			prep: func() (toRemove *os.File, err error) {
+				toRemove, err = createTestTempFile(exampleJSON)
+				os.Stdin = toRemove
+				os.Setenv("AWS_PROVIDER_ARN", "1n")
+				os.Setenv("AWS_ROLE_ARN", "2n")
+				return
+			},
+			wantCfg: &Configuration{
+				AWSProviderARN: "1n",
+				AWSRoleARN:     "2n",
+				OktaClientID:   "3",
+				OktaAppID:      "4",
+				OktaURL:        "5",
+			},
 		},
 		{
 			name: "failure (invalid configuration)",
@@ -115,7 +149,7 @@ func TestNew(t *testing.T) {
 				defer toRemove.Close()
 			}
 
-			gotCfg, err := New(tt.args.overrideLocation)
+			gotCfg, err := New(tt.args.profile, tt.args.overrideLocation)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("New() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -390,7 +424,7 @@ func TestConfiguration_Validate(t *testing.T) {
 }
 
 func ExampleNew() {
-	cfg, err := New("")
+	cfg, err := New("my_profile", "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -399,7 +433,7 @@ func ExampleNew() {
 }
 
 func ExampleNew_with_override() {
-	cfg, err := New("./path/to/config/config.json")
+	cfg, err := New("my_profile", "./path/to/config/config.json")
 	if err != nil {
 		log.Fatal(err)
 	}
