@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+
+	cfg "github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/configuration"
 )
 
 const (
@@ -13,6 +15,7 @@ const (
 
 var (
 	ErrNotFound = errors.New("not found")
+	ErrNoConfig = errors.New("failed to obtain configuration")
 )
 
 type CLI struct {
@@ -24,7 +27,7 @@ func New() CLI {
 		commands: map[string]Command{},
 	}
 
-	c.AddCommand(login)
+	c.AddCommand(loginCmd)
 	return c
 }
 
@@ -52,30 +55,24 @@ func (c CLI) AddCommand(cmd Command) {
 	c.commands[cmd.name] = cmd
 }
 
-func getConfig() []Configuration {
+func getConfig() (cfg.Configuration, error) {
 	// load configuration
-	// cfg, err := New("./path/to/config/config.json")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	return []Configuration{
-		{
-			AWSProviderARN: "provider-arn",
-			AWSRoleARN:     "role-are",
-			Name:           "test",
-		},
+	config, err := cfg.New("")
+	if err != nil {
+		return cfg.Configuration{}, fmt.Errorf("%w:  %v", ErrNoConfig, err)
 	}
+	return *config, nil
 }
 
-func getValueOrDefault(key string, values []Configuration) (Configuration, error) {
-	d := Configuration{}
+func getValueOrDefault(key string, values []cfg.Configuration) (cfg.Configuration, error) {
+	d := cfg.Configuration{}
 	dFound := false
 	for i := range values {
-		if values[i].Name == key {
+		if values[i].OktaAppID == key {
 			return values[i], nil
 		}
 
-		if values[i].Name == defaultKey {
+		if values[i].OktaAppID == defaultKey {
 			d = values[i]
 			dFound = true
 		}
