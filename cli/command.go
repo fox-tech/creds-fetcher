@@ -6,7 +6,21 @@ import (
 	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/aws"
 )
 
-func getCredentials(flags FlagMap) error {
+type CommandBody func(FlagMap) error
+
+type Command struct {
+	name string
+	doc  string
+	f    CommandBody
+}
+
+var login = Command{
+	name: "login",
+	doc:  "get credentials for AWS profile",
+	f:    login,
+}
+
+func login(flags FlagMap) error {
 	pf, err := findFlag(FlagProfile, flags)
 	if err != nil {
 		return fmt.Errorf("get-credentials: %w", err)

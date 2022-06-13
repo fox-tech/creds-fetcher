@@ -15,16 +15,16 @@ var (
 	ErrNotFound = errors.New("not found")
 )
 
+type CLI struct {
+	commands map[string]Command
+}
+
 func New() CLI {
 	c := CLI{
 		commands: map[string]Command{},
 	}
 
-	c.AddCommand(Command{
-		name: "get-credentials",
-		doc:  "gets credentials for a defined profile",
-		f:    getCredentials,
-	})
+	c.AddCommand(login)
 	return c
 }
 
