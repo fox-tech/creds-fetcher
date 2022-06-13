@@ -45,17 +45,17 @@ type Profile struct {
 	PrincipalARN string
 }
 
+// IsEmpty verifies whether all fields of the profile are empty.
+func (p Profile) IsEmpty() bool {
+	return p.Name == "" || p.RoleARN == "" || p.PrincipalARN == ""
+}
+
 // Provider exposes the methods to interact with AWS
 type Provider struct {
 	fs fileSystemManager
 	httpClient
 
 	Profile Profile
-}
-
-// IsEmpty verifies whether all fields of the profile are empty.
-func (p Profile) IsEmpty() bool {
-	return p.Name == "" || p.RoleARN == "" || p.PrincipalARN == ""
 }
 
 // httpClient defines the methods that the provider needs an http client to have
