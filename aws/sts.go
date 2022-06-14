@@ -52,7 +52,7 @@ func (p Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) {
 		"SAMLAssertion": saml,
 	}
 
-	resp, err := p.httpClient.Get(stsURL, params, nil)
+	resp, err := p.httpClient.Get(STSURL, params, nil)
 	defer resp.Body.Close()
 	if err != nil {
 		return credentials{}, fmt.Errorf("%w: %v", ErrBadRequest, err)

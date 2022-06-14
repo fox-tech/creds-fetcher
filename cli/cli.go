@@ -2,8 +2,10 @@ package cli
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 const (
@@ -12,64 +14,80 @@ const (
 
 var (
 	ErrNotFound  = errors.New("not found")
-	ErrNoConfig  = errors.New("failed to obtain configuration")
 	ErrNoCommand = errors.New("missing command name")
 )
 
+// CLI represents an interpreter that will execute a given command
 type CLI struct {
-	commands       map[string]Command
-	currentCommand string
-	flags          FlagMap
+	// args represents the command line arguments sent to the CLI. They are set
+	// to os.Args when New() is called
+	args []string
+	// commands represents the available commands to the CLI
+	commands CommandMap
+	// flags represents the flags sent to the CLI. They are parsed based on args
+	flags FlagMap
 }
 
+// New creates a CLI instance with default values and adds the
+// supported commands: login
 func New() CLI {
 	c := CLI{
-		commands: map[string]Command{},
+		commands: CommandMap{},
 		flags:    FlagMap{},
 	}
-
+	c.args = os.Args
 	c.AddCommand(loginCmd)
 	return c
 }
 
+// Execute executes a given command by parsing the command line arguments
 func (c CLI) Execute(args ...string) error {
-	if err := c.ParseArguments(); err != nil {
-		log.Fatalf("parsing arguments: %v", err)
+	cmdName, err := c.ParseArguments()
+	if err != nil {
+		err = fmt.Errorf("parsing arguments: %w", err)
+		log.Print(err)
 		return err
 	}
 
-	command, ok := c.commands[c.currentCommand]
+	command, ok := c.commands[cmdName]
 	if !ok {
-		log.Fatal("command not found")
-		return ErrNotFound
+		err := fmt.Errorf("command %s %w", cmdName, ErrNotFound)
+		log.Print(err)
+		return err
 	}
 
 	if err := command.f(c.flags); err != nil {
-		log.Fatal(err)
+		err = fmt.Errorf("%s: %w", cmdName, err)
+		log.Print(err)
 		return err
 	}
 
 	return nil
 }
 
+// AddCommand adds a new supported command to the CLI
 func (c *CLI) AddCommand(cmd Command) {
 	c.commands[cmd.name] = cmd
 }
 
-// Parse Arguments obtains command line arguments, currently it only returns
-// the command name, since it is the only one being used
-func (c *CLI) ParseArguments() error {
-	args := os.Args
-	if len(args) == 1 {
-		return ErrNoCommand
+// Parse Arguments obtains command line arguments and parses flags,
+// currently it only returns the command name
+func (c *CLI) ParseArguments() (string, error) {
+	if len(c.args) == 1 {
+		return "", ErrNoCommand
 	}
 
-	c.currentCommand = args[1]
+	// verifying the command name is not a flag
+	cmdName := c.args[1]
+	if strings.HasPrefix(cmdName, "-") {
+		return "", ErrNoCommand
+	}
+
 	flags := []string{}
-	if len(args) > 2 {
-		flags = args[2:]
+	if len(c.args) > 2 {
+		flags = c.args[2:]
 	}
-	c.ParseFlags(c.currentCommand, flags)
+	c.ParseFlags(cmdName, flags)
 
-	return nil
+	return cmdName, nil
 }

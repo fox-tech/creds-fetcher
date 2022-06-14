@@ -188,7 +188,7 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 				mckClient: client.MockHttpClient{
 					GetStatusCode: http.StatusOK,
 					GetStatus:     "OK",
-					GetBodyData:   []byte(successSTSResponse),
+					GetBodyData:   []byte(SuccessSTSResponse),
 				},
 			},
 			expect: expect{
@@ -279,7 +279,7 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 				mckClient: client.MockHttpClient{
 					GetStatusCode: http.StatusOK,
 					GetStatus:     "OK",
-					GetBodyData:   []byte(successSTSResponse),
+					GetBodyData:   []byte(SuccessSTSResponse),
 				},
 				byteReader: func(io.Reader) ([]byte, error) { return nil, errors.New("response could not be read") },
 			},
@@ -347,7 +347,7 @@ func TestUpdateCredentialsFile(t *testing.T) {
 		PrincipalARN: "arn:aws:iam::ProviderARN",
 	}
 
-	credentialsFilepath := path.Join(credentialsDirectory, credentialsFileName)
+	credentialsFilepath := path.Join(CredentialsDirectory, CredentialsFileName)
 
 	tests := []struct {
 		name string
@@ -464,7 +464,7 @@ func TestUpdateCredentialsFile(t *testing.T) {
 				t.Errorf("updateCredentialsFile() expected error: %s, got: %s", tt.expect.err, err)
 			}
 
-			savedData, _ := tt.opts.mckFs.ReadFile(credentialsDirectory, credentialsFileName)
+			savedData, _ := tt.opts.mckFs.ReadFile(CredentialsDirectory, CredentialsFileName)
 			if !bytes.Equal(savedData, tt.expect.data) {
 				t.Errorf("updateCredentialsFile() expected file data: %s, got: %s", tt.expect.data, savedData)
 			}
@@ -496,7 +496,7 @@ func TestGenerateCredentials(t *testing.T) {
 				mckClient: client.MockHttpClient{
 					GetStatusCode: http.StatusOK,
 					GetStatus:     "OK",
-					GetBodyData:   []byte(successSTSResponse),
+					GetBodyData:   []byte(SuccessSTSResponse),
 				},
 				mckFs: fsmanager.NewMock(),
 			},
@@ -528,7 +528,7 @@ func TestGenerateCredentials(t *testing.T) {
 				mckClient: client.MockHttpClient{
 					GetStatusCode: http.StatusOK,
 					GetStatus:     "OK",
-					GetBodyData:   []byte(successSTSResponse),
+					GetBodyData:   []byte(SuccessSTSResponse),
 				},
 				mckFs: fsmanager.MockFileSystem{
 					WriteErr: errors.New("pemission (to dance) denied"),
@@ -554,7 +554,7 @@ func TestGenerateCredentials(t *testing.T) {
 				t.Errorf("GenerateCredentials() expected error: %s, got: %s", tt.expect.err, err)
 			}
 
-			savedData, _ := tt.opts.mckFs.ReadFile(credentialsDirectory, credentialsFileName)
+			savedData, _ := tt.opts.mckFs.ReadFile(CredentialsDirectory, CredentialsFileName)
 			if !bytes.Equal(savedData, tt.expect.data) {
 				t.Errorf("GenerateCredentials() expected file data: %s, got: %s", tt.expect.data, savedData)
 			}
