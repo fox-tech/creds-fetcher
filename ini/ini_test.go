@@ -333,6 +333,18 @@ func TestReadFields(t *testing.T) {
 				err:    nil,
 			},
 		},
+		{
+			name: "send valid data ending in equals: fields are read correctly",
+			arg:  []byte("key1=value1\n key2 = value2==\n emptyKey = \n"),
+			expect: expect{
+				fields: map[string]string{
+					"key1":     "value1",
+					"key2":     "value2==",
+					"emptyKey": "",
+				},
+				err: nil,
+			},
+		},
 	}
 
 	for _, tt := range tests {
