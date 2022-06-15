@@ -14,16 +14,14 @@ import (
 	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/ini"
 )
 
-const (
+var (
 	// stsURL represents the AWS STS URL to enchange SAML assertion
 	// token for credentials
-	stsURL = "https://sts.amazonaws.com/oauth2/v1/token"
+	STSURL = "https://sts.amazonaws.com/oauth2/v1/token"
 	// TODO: How does this works for windows?
-	credentialsDirectory = ".aws"
-	credentialsFileName  = "credentials"
-)
+	CredentialsDirectory = ".aws"
+	CredentialsFileName  = "credentials"
 
-var (
 	ErrBadRequest        = errors.New("invalid request to STS")
 	ErrBadResponse       = errors.New("could not read response from STS")
 	ErrFailedMarshal     = errors.New("encoding credentials failed")
@@ -112,7 +110,7 @@ func (aws Provider) GenerateCredentials(saml string) error {
 func (p Provider) updateCredentialsFile(newCred credentials) error {
 	log.Print("updating credentials file...")
 
-	data, err := p.fs.ReadFile(credentialsDirectory, credentialsFileName)
+	data, err := p.fs.ReadFile(CredentialsDirectory, CredentialsFileName)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrFileHandlerFailed, err)
 	}
@@ -129,7 +127,7 @@ func (p Provider) updateCredentialsFile(newCred credentials) error {
 		return fmt.Errorf("%w: %v", ErrFailedMarshal, err)
 	}
 
-	credentialsFilepath := filepath.Join(credentialsDirectory, credentialsFileName)
+	credentialsFilepath := filepath.Join(CredentialsDirectory, CredentialsFileName)
 	if err = p.fs.WriteFile(credentialsFilepath, writeData); err != nil {
 		return fmt.Errorf("%w: %v", ErrFileHandlerFailed, err)
 	}

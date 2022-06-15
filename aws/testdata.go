@@ -1,6 +1,6 @@
 package aws
 
-const successSTSResponse = `<AssumeRoleWithSAMLResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
+const SuccessSTSResponse = `<AssumeRoleWithSAMLResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
 <AssumeRoleWithSAMLResult>
     <Audience>https://signin.aws.amazon.com/saml</Audience>
     <AssumedRoleUser>
