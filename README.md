@@ -12,7 +12,13 @@ make install
 ````
 
 ## Configuration
-Configuration files should be created beforehand. Accepted files include `JSON` and `TOML` files.
+Configuration files should be created beforehand. Accepted files include `JSON` and `TOML` files. The default locations (in order) are:
+
+- `./config.json`
+- `./config.toml`
+- `[ENVIRONMENT VARIABLES]`.
+
+An override configuration location can be provided with the `--config` flag.
 
 Example `JSON` configuration file
 
