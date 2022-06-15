@@ -142,7 +142,7 @@ func readFields(data []byte) (map[string]string, error) {
 			continue
 		}
 
-		parts := strings.Split(sc.Text(), "=")
+		parts := strings.SplitN(sc.Text(), "=", 2)
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("%w: each field should be in the format key = value, invalid %s ", ErrInvalidContent, line)
 		}
