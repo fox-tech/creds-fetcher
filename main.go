@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/cli"
+	"github.com/foxbroadcasting/creds-fetcher/cli"
 )
 
 func main() {

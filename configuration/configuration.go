@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/env"
+	"github.com/foxbroadcasting/creds-fetcher/env"
 )
 
 var (

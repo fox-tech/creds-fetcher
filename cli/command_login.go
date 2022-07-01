@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/aws"
-	cfg "github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/configuration"
-	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/okta"
+	"github.com/foxbroadcasting/creds-fetcher/aws"
+	cfg "github.com/foxbroadcasting/creds-fetcher/configuration"
+	"github.com/foxbroadcasting/creds-fetcher/okta"
 )
 
 var (
