@@ -1,4 +1,4 @@
-# fox-okta-oie-gimme-aws-creds
+# creds-fetcher
 Tool to authenticate using Okta OIE and AWS STS.
 After authentication, credentials are stored in `.aws/credentials`
 
