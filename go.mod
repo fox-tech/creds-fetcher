@@ -1,4 +1,4 @@
-module github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds
+module github.com/foxbroadcasting/creds-fetcher
 
 go 1.18
 
