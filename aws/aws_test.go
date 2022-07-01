@@ -9,9 +9,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/client"
-	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/fsmanager"
-	"github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/ini"
+	"github.com/foxbroadcasting/creds-fetcher/client"
+	"github.com/foxbroadcasting/creds-fetcher/fsmanager"
+	"github.com/foxbroadcasting/creds-fetcher/ini"
 )
 
 type opts struct {

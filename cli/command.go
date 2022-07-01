@@ -1,6 +1,6 @@
 package cli
 
-import "github.com/foxbroadcasting/fox-okta-oie-gimme-aws-creds/okta"
+import "github.com/foxbroadcasting/creds-fetcher/okta"
 
 type CommandAction func(FlagMap) error
 
