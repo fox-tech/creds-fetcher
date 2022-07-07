@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/user"
 	"strings"
@@ -62,12 +63,32 @@ func getReader(src string) (r io.ReadSeekCloser, err error) {
 }
 
 func getStdinReader() (r io.ReadSeekCloser, err error) {
+	var sz int64
+	if sz, err = getSize(); err != nil {
+		return
+	}
+
+	if sz == 0 {
+		err = io.EOF
+		return
+	}
+
 	buf := bytes.NewBuffer(nil)
 	if _, err = io.Copy(buf, os.Stdin); err != nil {
 		return
 	}
 	reader := bytes.NewReader(buf.Bytes())
 	r = makeReadSeekCloser(reader)
+	return
+}
+
+func getSize() (n int64, err error) {
+	var info fs.FileInfo
+	if info, err = os.Stdin.Stat(); err != nil {
+		return
+	}
+
+	n = info.Size()
 	return
 }
 
