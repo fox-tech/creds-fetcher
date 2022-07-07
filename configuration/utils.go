@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/user"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 )
@@ -37,6 +39,10 @@ func getSource(overrideLocation string) (r io.ReadSeekCloser, key string, err er
 	}
 
 	for _, source := range sources {
+		if source, err = replaceTilde(source); err != nil {
+			return
+		}
+
 		if r, err = getReader(source); err == nil {
 			key = source
 			return
@@ -60,7 +66,6 @@ func getStdinReader() (r io.ReadSeekCloser, err error) {
 	if _, err = io.Copy(buf, os.Stdin); err != nil {
 		return
 	}
-
 	reader := bytes.NewReader(buf.Bytes())
 	r = makeReadSeekCloser(reader)
 	return
@@ -103,5 +108,21 @@ func decodeAsTOML(r io.Reader) (cfgs map[string]*Configuration, err error) {
 
 func decodeAsJSON(r io.Reader) (cfgs map[string]*Configuration, err error) {
 	err = json.NewDecoder(r).Decode(&cfgs)
+	return
+}
+
+func replaceTilde(str string) (out string, err error) {
+	if strings.IndexByte(str, '~') == -1 {
+		out = str
+		return
+	}
+
+	var u *user.User
+	if u, err = user.Current(); err != nil {
+		return
+	}
+
+	dir := u.HomeDir
+	out = strings.Replace(str, "~", dir, 1)
 	return
 }
