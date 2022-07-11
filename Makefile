@@ -1,13 +1,11 @@
-BIN_NAME="foxta"
-
 test:
 	@echo "===> Testing"
 	go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
 
 install:
 	@echo "===> Installing"
-	go build -o $(BIN_NAME)
-	mv ./$(BIN_NAME) /usr/local/bin 
+	go install
 
 uninstall:
-	rm /usr/local/bin/$(BIN_NAME)
+	@echo "===> Uninstalling"
+	rm "$(GOPATH)/bin/creds-fetcher"
