@@ -6,6 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -126,18 +128,18 @@ func Test_getSource(t *testing.T) {
 			wantKey: "stdin",
 		},
 		{
-			name: "success (config.json)",
+			name: "success (~/.fox-tech/config.json)",
 			prep: func() (tmp *os.File, err error) {
-				return createTestFile("./config.json", `{"a":"foo"}`)
+				return createTestFile("~/.fox-tech/config.json", `{"a":"foo"}`)
 			},
-			wantKey: "./config.json",
+			wantKey: "~/.fox-tech/config.json",
 		},
 		{
-			name: "success (config.toml)",
+			name: "success (~/.fox-tech/config.toml)",
 			prep: func() (tmp *os.File, err error) {
-				return createTestFile("./config.toml", `{"a":"foo"}`)
+				return createTestFile("~/.fox-tech/config.toml", `{"a":"foo"}`)
 			},
-			wantKey: "./config.toml",
+			wantKey: "~/.fox-tech/config.toml",
 		},
 		{
 			name: "success (override location)",
@@ -172,6 +174,11 @@ func Test_getSource(t *testing.T) {
 			if toRemove != nil {
 				defer os.Remove(toRemove.Name())
 				defer toRemove.Close()
+			}
+
+			if tt.wantKey, err = replaceTilde(tt.wantKey); err != nil {
+				t.Errorf("getSource() prep: %v", err)
+				return
 			}
 
 			_, gotKey, err := getSource(tt.args.overrideLocation)
@@ -631,6 +638,19 @@ func createTestClosedTempfile() (tmp *os.File, err error) {
 }
 
 func createTestFile(destination, str string) (tmp *os.File, err error) {
+	if destination, err = replaceTilde(destination); err != nil {
+		return
+	}
+
+	dir := path.Dir(destination)
+	if dir, err = filepath.Abs(dir); err != nil {
+		return
+	}
+
+	if err = os.MkdirAll(dir, 0744); err != nil {
+		return
+	}
+
 	if tmp, err = os.Create(destination); err != nil {
 		return
 	}

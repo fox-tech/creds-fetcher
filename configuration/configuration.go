@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrNoConfiguration              = errors.New("no configuration file found")
+	ErrNoConfiguration              = errors.New("no configuration file found, default configuration location is ~/.fox-tech")
 	ErrEmptyConfigurationFile       = errors.New("invalid configuration file, cannot be empty")
 	ErrCannotParseConfigurationFile = errors.New("unable to parse configuration file")
 	ErrInvalidAWSProviderARN        = errors.New("invalid aws_provider_arn, cannot be empty")
@@ -21,9 +21,9 @@ var (
 
 var (
 	sources = []string{
-		"./config.json",
-		"./config.toml",
 		"stdin",
+		"~/.fox-tech/config.json",
+		"~/.fox-tech/config.toml",
 	}
 
 	decoders = []decoder{
