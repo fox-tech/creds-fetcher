@@ -17,7 +17,7 @@ import (
 var (
 	// stsURL represents the AWS STS URL to enchange SAML assertion
 	// token for credentials
-	STSURL = "https://sts.amazonaws.com/oauth2/v1/token"
+	STSURL = "https://sts.amazonaws.com/"
 	// TODO: How does this works for windows?
 	CredentialsDirectory = ".aws"
 	CredentialsFileName  = "credentials"
@@ -59,6 +59,7 @@ type Provider struct {
 // httpClient defines the methods that the provider needs an http client to have
 type httpClient interface {
 	Get(r_url string, params map[string]string, body io.Reader) (*http.Response, error)
+	Post(r_url string, params map[string]string, headers map[string]string, body interface{}) (*http.Response, error)
 }
 
 // fileSystemManager defines the methods that the provider needs a file system

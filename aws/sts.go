@@ -44,7 +44,7 @@ type stsError struct {
 func (p Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) {
 	log.Print("getting STS credentials...")
 
-	params := map[string]string{
+	body := map[string]string{
 		"Version":       "2011-06-15",
 		"Action":        "AssumeRoleWithSAML",
 		"RoleArn":       p.Profile.RoleARN,
@@ -52,11 +52,15 @@ func (p Provider) getSTSCredentialsFromSAML(saml string) (credentials, error) {
 		"SAMLAssertion": saml,
 	}
 
-	resp, err := p.httpClient.Get(STSURL, params, nil)
-	defer resp.Body.Close()
+	headers := map[string]string{
+		"Content-Type": "application/x-www-form-urlencoded",
+	}
+
+	resp, err := p.httpClient.Post(STSURL, nil, headers, body)
 	if err != nil {
 		return credentials{}, fmt.Errorf("%w: %v", ErrBadRequest, err)
 	}
+	defer resp.Body.Close()
 
 	respBody, err := ioReadAll(resp.Body)
 	if err != nil {
