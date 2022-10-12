@@ -186,9 +186,9 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			opts: opts{
 				p: prf,
 				mckClient: client.MockHttpClient{
-					GetStatusCode: http.StatusOK,
-					GetStatus:     "OK",
-					GetBodyData:   []byte(SuccessSTSResponse),
+					PostStatusCode: http.StatusOK,
+					PostStatus:     "OK",
+					PostBodyData:   []byte(SuccessSTSResponse),
 				},
 			},
 			expect: expect{
@@ -206,7 +206,7 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			opts: opts{
 				p: prf,
 				mckClient: client.MockHttpClient{
-					GetErr: errors.New("error while doing request"),
+					PostErr: errors.New("error while doing request"),
 				},
 			},
 			expect: expect{
@@ -219,8 +219,8 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			opts: opts{
 				p: prf,
 				mckClient: client.MockHttpClient{
-					GetStatusCode: http.StatusOK,
-					GetStatus:     "OK",
+					PostStatusCode: http.StatusOK,
+					PostStatus:     "OK",
 				},
 			},
 			expect: expect{
@@ -233,9 +233,9 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			opts: opts{
 				p: prf,
 				mckClient: client.MockHttpClient{
-					GetStatusCode: http.StatusBadRequest,
-					GetStatus:     "Bad Request",
-					GetBodyData:   []byte(errSTSResponse),
+					PostStatusCode: http.StatusBadRequest,
+					PostStatus:     "Bad Request",
+					PostBodyData:   []byte(errSTSResponse),
 				},
 			},
 			expect: expect{
@@ -248,9 +248,9 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			opts: opts{
 				p: prf,
 				mckClient: client.MockHttpClient{
-					GetStatusCode: http.StatusForbidden,
-					GetStatus:     "Forbidden",
-					GetBodyData:   []byte(errSTSResponse),
+					PostStatusCode: http.StatusForbidden,
+					PostStatus:     "Forbidden",
+					PostBodyData:   []byte(errSTSResponse),
 				},
 			},
 			expect: expect{
@@ -263,8 +263,8 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			opts: opts{
 				p: prf,
 				mckClient: client.MockHttpClient{
-					GetStatusCode: http.StatusInternalServerError,
-					GetStatus:     "Internal Serverl Error",
+					PostStatusCode: http.StatusInternalServerError,
+					PostStatus:     "Internal Server Error",
 				},
 			},
 			expect: expect{
@@ -277,9 +277,9 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			opts: opts{
 				p: prf,
 				mckClient: client.MockHttpClient{
-					GetStatusCode: http.StatusOK,
-					GetStatus:     "OK",
-					GetBodyData:   []byte(SuccessSTSResponse),
+					PostStatusCode: http.StatusOK,
+					PostStatus:     "OK",
+					PostBodyData:   []byte(SuccessSTSResponse),
 				},
 				byteReader: func(io.Reader) ([]byte, error) { return nil, errors.New("response could not be read") },
 			},
@@ -293,9 +293,9 @@ func TestGetSTSCredentialsFromSAML(t *testing.T) {
 			opts: opts{
 				p: prf,
 				mckClient: client.MockHttpClient{
-					GetStatusCode: http.StatusOK,
-					GetStatus:     "OK",
-					GetBodyData:   nil,
+					PostStatusCode: http.StatusOK,
+					PostStatus:     "OK",
+					PostBodyData:   nil,
 				},
 			},
 			expect: expect{
@@ -494,9 +494,9 @@ func TestGenerateCredentials(t *testing.T) {
 			opts: opts{
 				p: prf,
 				mckClient: client.MockHttpClient{
-					GetStatusCode: http.StatusOK,
-					GetStatus:     "OK",
-					GetBodyData:   []byte(SuccessSTSResponse),
+					PostStatusCode: http.StatusOK,
+					PostStatus:     "OK",
+					PostBodyData:   []byte(SuccessSTSResponse),
 				},
 				mckFs: fsmanager.NewMock(),
 			},
@@ -510,9 +510,9 @@ func TestGenerateCredentials(t *testing.T) {
 			opts: opts{
 				p: prf,
 				mckClient: client.MockHttpClient{
-					GetStatusCode: http.StatusForbidden,
-					GetStatus:     "Forbiddend",
-					GetBodyData:   []byte(errSTSResponse),
+					PostStatusCode: http.StatusForbidden,
+					PostStatus:     "Forbiddend",
+					PostBodyData:   []byte(errSTSResponse),
 				},
 				mckFs: fsmanager.NewMock(),
 			},
@@ -526,9 +526,9 @@ func TestGenerateCredentials(t *testing.T) {
 			opts: opts{
 				p: prf,
 				mckClient: client.MockHttpClient{
-					GetStatusCode: http.StatusOK,
-					GetStatus:     "OK",
-					GetBodyData:   []byte(SuccessSTSResponse),
+					PostStatusCode: http.StatusOK,
+					PostStatus:     "OK",
+					PostBodyData:   []byte(SuccessSTSResponse),
 				},
 				mckFs: fsmanager.MockFileSystem{
 					WriteErr: errors.New("pemission (to dance) denied"),
