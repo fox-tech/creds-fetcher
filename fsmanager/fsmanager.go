@@ -53,7 +53,7 @@ func (defaultFileSystemManager) ReadFile(dir, filename string) ([]byte, error) {
 		}
 
 		log.Print("credentials directory not found, creating...")
-		if err = os.Mkdir(dir, 0700); err != nil {
+		if err = os.Mkdir(dir, 0766); err != nil {
 			return data, fmt.Errorf("%w: failed to create dir: %v", ErrCouldNotWriteFile, err)
 		}
 		log.Print("credentials directory created")
