@@ -60,7 +60,7 @@ func (defaultFileSystemManager) ReadFile(dir, filename string) ([]byte, error) {
 	}
 
 	log.Print("credentials file not found, creating...")
-	_, err = os.Create(fp)
+	_, err = os.OpenFile(fp, os.O_CREATE, 0600)
 	if err != nil {
 		return data, fmt.Errorf("%w: failed to create file: %v", ErrCouldNotWriteFile, err)
 	}
