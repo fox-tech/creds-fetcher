@@ -66,7 +66,7 @@ func TestReadFile(t *testing.T) {
 	// Create file to test data
 	h, _ := os.UserHomeDir()
 	os.Chdir(h)
-	os.Mkdir(tempExistingDir, 0766)
+	os.Mkdir(tempExistingDir, 0700)
 	f, _ := os.Create(filepath.Join(tempExistingDir, tempExistingFile))
 	f.Write(testData)
 	f.Close()
