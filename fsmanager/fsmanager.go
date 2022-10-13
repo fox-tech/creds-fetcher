@@ -4,7 +4,6 @@ package fsmanager
 import (
 	"errors"
 	"fmt"
-	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
@@ -71,5 +70,5 @@ func (defaultFileSystemManager) ReadFile(dir, filename string) ([]byte, error) {
 }
 
 func (defaultFileSystemManager) WriteFile(name string, data []byte) error {
-	return os.WriteFile(name, data, fs.FileMode(os.O_RDWR))
+	return os.WriteFile(name, data, 0600)
 }
