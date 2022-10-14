@@ -4,8 +4,8 @@ const SuccessSTSResponse = `<AssumeRoleWithSAMLResponse xmlns="https://sts.amazo
 <AssumeRoleWithSAMLResult>
     <Audience>https://signin.aws.amazon.com/saml</Audience>
     <AssumedRoleUser>
-      <AssumedRoleId>AROARORTY3BBGGVCOV4OP:maria.ramirez@wizeline.com</AssumedRoleId>
-      <Arn>arn:aws:sts::099966572610:assumed-role/okta-oie-ReadOnly/maria.ramirez@wizeline.com</Arn>
+      <AssumedRoleId>AROARORTY3BBGGVCOV4OP:mail@mail.com</AssumedRoleId>
+      <Arn>arn:aws:sts::4543372610:assumed-role/okta-oie-ReadOnly/mail@mail.com</Arn>
     </AssumedRoleUser>
     <Credentials>
       <AccessKeyId>AWSACCESSKEYID</AccessKeyId>
@@ -13,10 +13,10 @@ const SuccessSTSResponse = `<AssumeRoleWithSAMLResponse xmlns="https://sts.amazo
       <SessionToken>reallylongandsecretsessiontoken</SessionToken>
       <Expiration>2022-06-07T22:54:14Z</Expiration>
     </Credentials>
-    <Subject>maria.ramirez@wizeline.com</Subject>
-    <NameQualifier>ntHNa4L+06nVQFiE3ekTsihyVQY=</NameQualifier>
+    <Subject>mail@mail.com</Subject>
+    <NameQualifier>ntHNsdfsihyVQY=</NameQualifier>
     <SubjectType>unspecified</SubjectType>
-    <Issuer>http://www.okta.com/exk3kzb4ja8B9PHgs1d7</Issuer>
+    <Issuer>http://www.okta.com/esdB9PHgs1d7</Issuer>
   </AssumeRoleWithSAMLResult>
   <ResponseMetadata>
     <RequestId>27519a21-569b-401b-92e1-a88fe12661e8</RequestId>
