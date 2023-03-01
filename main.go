@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/foxbroadcasting/creds-fetcher/cli"
+	"github.com/fox-tech/creds-fetcher/cli"
 )
 
 func main() {
