@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/foxbroadcasting/creds-fetcher/aws"
+	"github.com/fox-tech/creds-fetcher/aws"
 )
 
 type testServerInput struct {

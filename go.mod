@@ -1,4 +1,4 @@
-module github.com/foxbroadcasting/creds-fetcher
+module github.com/fox-tech/creds-fetcher
 
 go 1.18
 

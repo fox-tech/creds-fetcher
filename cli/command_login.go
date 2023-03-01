@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/foxbroadcasting/creds-fetcher/aws"
-	cfg "github.com/foxbroadcasting/creds-fetcher/configuration"
-	"github.com/foxbroadcasting/creds-fetcher/okta"
+	"github.com/fox-tech/creds-fetcher/aws"
+	cfg "github.com/fox-tech/creds-fetcher/configuration"
+	"github.com/fox-tech/creds-fetcher/okta"
 )
 
 var (

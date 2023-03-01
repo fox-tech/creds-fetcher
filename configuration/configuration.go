@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/foxbroadcasting/creds-fetcher/env"
+	"github.com/fox-tech/creds-fetcher/env"
 )
 
 var (
